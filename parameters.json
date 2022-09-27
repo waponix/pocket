@@ -1,0 +1,10 @@
+{
+  "host": "localhost",
+  "protocol": "http",
+  "domain": null,
+  "database": {
+    "dbName": null,
+    "user": "root",
+    "password": ""
+  }
+}

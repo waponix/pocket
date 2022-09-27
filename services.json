@@ -1,0 +1,9 @@
+{
+  "src\\Request\\HttpRequest": {
+    "parameters": {
+      "host": "@database.user",
+      "protocol": "@protocol"
+    }
+  }
+}
+
