@@ -141,6 +141,9 @@ class Pocket
 
         $metaData = $this->serviceMap[$class];
 
+        // when class exist in metaData, use it instead
+        if (isset($metaData['class']) && !empty($metaData['class'])) $class = $metaData['class'];
+
         // Decided to use iterator because it is much faster than recursive, although the ClassIterator itself has recursive functionality
         // but is only minimal because it only need to get the classes and stack them accordingly
         // also added caching to reduce memory usage and add additional optimization
