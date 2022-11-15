@@ -1,6 +1,8 @@
 <?php
 namespace src\Pocket;
 
+use ReflectionMethod;
+use ReflectionParameter;
 use src\Pocket\ClassIterator\ClassIterator;
 use src\Pocket\Exception\ClassNotFoundException;
 use src\Pocket\Exception\FileNotFoundException;
@@ -8,6 +10,7 @@ use src\Pocket\Exception\FileNotFoundException;
 class Pocket
 {
     const CONSTRUCTOR = '__construct';
+    const OPT_STATIC_CONSTRUCT = 'staticConstruct';
     const PARAM_PREFIX = '@';
 
     private $classInstances = [];
@@ -29,7 +32,6 @@ class Pocket
     {
         if (self::$instance instanceof Pocket) return self::$instance;
         self::$instance = new self();
-        self::$instance->classInstances[self::class] = self::$instance;
         return self::$instance;
     }
 
@@ -103,6 +105,30 @@ class Pocket
     }
 
     /**
+     * Directly calls a method from a loaded object
+     * @param string $class
+     * @param string $method
+     * @return mixed
+     * @throws ClassNotFoundException
+     * @throws FileNotFoundException
+     */
+    public function call(string $class, string $method)
+    {
+        $object = null;
+
+        if ($class !== null) {
+            $object = $this->get($class);
+        }
+
+        $reflectionMethod = new ReflectionMethod($class, $method);
+        $reflectionParameters = $reflectionMethod->getParameters();
+
+        $arguments = $this->loadArguments($reflectionParameters);
+        return $reflectionMethod->invokeArgs($object, $arguments);
+    }
+
+    /**
+     * Load an object with properly injected dependencies
      * @param string $class
      * @return mixed
      * @throws ClassNotFoundException
@@ -110,16 +136,8 @@ class Pocket
      */
     public function get(string $class)
     {
-        if (!file_exists($this->serviceMapping)) {
-            return null;
-        }
-
-        if ($this->serviceMap === null) {
+        if (file_exists($this->serviceMapping) && $this->serviceMap === null) {
             $this->serviceMap = json_decode(file_get_contents($this->serviceMapping), true);
-        }
-
-        if (!isset($this->serviceMap[$class])) {
-            return null;
         }
 
         $classFile = str_replace('\\', '/', $class) . '.php';
@@ -139,64 +157,93 @@ class Pocket
     {
         if (isset($this->classInstances[$class])) return $this->classInstances[$class];
 
-        $metaData = $this->serviceMap[$class];
+        $metaData = isset($this->serviceMap[$class]) ? $this->serviceMap[$class] : [];
 
         // when class exist in metaData, use it instead
         if (isset($metaData['class']) && !empty($metaData['class'])) $class = $metaData['class'];
 
-        // Decided to use iterator because it is much faster than recursive, although the ClassIterator itself has recursive functionality
-        // but is only minimal because it only need to get the classes and stack them accordingly
-        // also added caching to reduce memory usage and add additional optimization
-        // this also makes it that the object loaded is the same instance
         // TODO: add option to load separate instance of an object
         $classIterator = new ClassIterator($class);
+
+        $object = null;
+
         foreach ($classIterator as $c) {
             $reflectionMethod = null;
+        
+            $metaData = isset($this->serviceMap[$c]) ? $this->serviceMap[$c] : []; 
 
-            if (method_exists($c, Pocket::CONSTRUCTOR)) {
+            if (isset($metaData['class']) && !empty($metaData['class'])) $c = $metaData['class'];
+
+            if (isset($this->classInstances[$c])) {
+                // again check if the class was already cached, to reduce load and avoid infinite loop
+                $object = $this->classInstances[$c];
+                continue;
+            }
+
+            if (isset($metaData[Pocket::OPT_STATIC_CONSTRUCT]) && method_exists($c, $metaData[Pocket::OPT_STATIC_CONSTRUCT])) {
+                $reflectionMethod = new \ReflectionMethod($c, $metaData[Pocket::OPT_STATIC_CONSTRUCT]);
+                $reflectionParameters = $reflectionMethod->getParameters();
+            } else if (method_exists($c, Pocket::CONSTRUCTOR)) {
                 $reflectionMethod = new \ReflectionMethod($c, Pocket::CONSTRUCTOR);
                 $reflectionParameters = $reflectionMethod->getParameters();
             } else {
                 $reflectionClass = new \ReflectionClass($c);
-                $this->classInstances[$c] = $reflectionClass->newInstance();
+                $object = $reflectionClass->newInstance();
+                if (!isset($metaData['keep']) || $metaData['keep'] === true) {
+                    $this->classInstances[$c] = $object;
+                }
                 continue;
             }
 
-            // build class arguments
-            $arguments = [];
-            foreach ($reflectionParameters as $parameter) {
-                if (!$parameter instanceof \ReflectionParameter) continue;
+            $arguments = $this->loadArguments($reflectionParameters);
 
-                if (isset($metaData['parameters']) && in_array($parameter->getName(), array_keys($metaData['parameters']))) {
-                    // when argument name matches a parameter in meta data
-                    if (strstr($metaData['parameters'][$parameter->getName()], Pocket::PARAM_PREFIX)) {
-                        // check if value needs to be taken from parameter
-                        $id = trim(str_replace(Pocket::PARAM_PREFIX, '', $metaData['parameters'][$parameter->getName()]));
+            if (isset($metaData[Pocket::OPT_STATIC_CONSTRUCT]) && method_exists($c, $metaData[Pocket::OPT_STATIC_CONSTRUCT])) {
+                $object = $reflectionMethod->invokeArgs(null, $arguments);
+            } else {
+                $reflectionClass = $reflectionMethod->getDeclaringClass();
+                $object = $reflectionClass->newInstanceArgs($arguments);
+            }
 
-                        $arguments[$parameter->getPosition()] = $this->getParameter($id);
+            if (!isset($metaData['keep']) || $metaData['keep'] === true) {
+                $this->classInstances[$c] = $object;
+            }
+        }
 
-                        continue;
-                    }
+        return $object;
+    }
 
-                    if (!$parameter->getType()->isBuiltin() && isset($this->classInstances[$metaData['parameters'][$parameter->getName()]])) {
-                        // when specific class is set for a parameter, try to load it as well
-                        $arguments[$parameter->getPosition()] = $this->loadObject($metaData['parameters'][$parameter->getName()]);
-                        continue;
-                    }
+    private function loadArguments(array $reflectionParameters)
+    {
+        // build class arguments
+        $arguments = [];
+        foreach ($reflectionParameters as $parameter) {
+            if (!$parameter instanceof \ReflectionParameter) continue;
+
+            if (isset($metaData['parameters']) && in_array($parameter->getName(), array_keys($metaData['parameters']))) {
+                // when argument name matches a parameter in meta data, try to use it
+                if (strstr($metaData['parameters'][$parameter->getName()], Pocket::PARAM_PREFIX)) {
+                    // check if value needs to be taken from parameter
+                    $id = trim(str_replace(Pocket::PARAM_PREFIX, '', $metaData['parameters'][$parameter->getName()]));
+
+                    $arguments[$parameter->getPosition()] = $this->getParameter($id);
+
+                    continue;
                 }
 
-                if (!$parameter->getType()->isBuiltin() && isset($this->classInstances[$parameter->getType()->__toString()])) {
-                    // if object already instantiated, use it
-                    $arguments[$parameter->getPosition()] = $this->classInstances[$parameter->getType()->__toString()];
+                if (!$parameter->getType()->isBuiltin() && isset($this->classInstances[$metaData['parameters'][$parameter->getName()]])) {
+                    // when specific class is set for a parameter, use it instead
+                    $arguments[$parameter->getPosition()] = $this->get($metaData['parameters'][$parameter->getName()]);
                     continue;
                 }
             }
 
-            $reflectionClass = $reflectionMethod->getDeclaringClass();
-
-            $this->classInstances[$c] = $reflectionClass->newInstanceArgs($arguments);
+            if (!$parameter->getType()->isBuiltin() && isset($this->classInstances[$parameter->getType()->__toString()])) {
+                // if object already instantiated, use it
+                $arguments[$parameter->getPosition()] = $this->classInstances[$parameter->getType()->__toString()];
+                continue;
+            }
         }
 
-        return $this->classInstances[$class];
+        return $arguments;
     }
 }
