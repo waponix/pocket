@@ -1,6 +1,7 @@
 <?php
 namespace src\Pocket;
 
+use ReflectionClass;
 use ReflectionMethod;
 use ReflectionParameter;
 use src\Pocket\ClassIterator\ClassIterator;
@@ -200,7 +201,7 @@ class Pocket
             if (isset($metaData[Pocket::OPT_STATIC_CONSTRUCT]) && method_exists($c, $metaData[Pocket::OPT_STATIC_CONSTRUCT])) {
                 $object = $reflectionMethod->invokeArgs(null, $arguments);
             } else {
-                $reflectionClass = $reflectionMethod->getDeclaringClass();
+                $reflectionClass = new ReflectionClass($c);
                 $object = $reflectionClass->newInstanceArgs($arguments);
             }
 
