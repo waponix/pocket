@@ -81,9 +81,9 @@ class Pouch
         $classFile = $reflectionClass->getFileName();
 
         clearstatcache(true, $classFile);
-        if (filemtime($classFile) !== $data[0]) return false;
-
-        if (md5_file($classFile) !== $data[1]) return false;
+        if (filemtime($classFile) > $data[0] && md5_file($classFile) !== $data[1]) {
+            return false;
+        }
 
         return true;
     }
