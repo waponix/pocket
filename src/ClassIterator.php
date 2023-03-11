@@ -1,5 +1,5 @@
 <?php
-namespace src\Pocket\ClassIterator;
+namespace Pocket;
 
 /**
  * Class ClassIterator
@@ -16,7 +16,7 @@ class ClassIterator implements \Iterator
         $this->collectClass($class);
     }
 
-    private function collectClass(string $class)
+    private function collectClass(string $class): void
     {
         $parameters = [];
 
@@ -33,32 +33,31 @@ class ClassIterator implements \Iterator
             }
         }
 
-        // the push call is at the end of this function so that the very end dependency will be first in the stack
+        // push the class is at the end of this function so that the very end dependency will be first in the stack
         $this->classes[] = $class;
     }
 
-    public function current()
+    public function current(): mixed
     {
         return $this->classes[$this->key];
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         $this->key = 0;
-        return $this;
     }
 
-    public function next()
+    public function next(): void
     {
         $this->key += 1;
     }
 
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->classes[$this->key]);
     }
 
-    public function key()
+    public function key(): int
     {
         return $this->key;
     }
