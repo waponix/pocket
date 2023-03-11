@@ -3,13 +3,6 @@
 use PHPUnit\Framework\TestCase;
 use Pocket\Pouch;
 
-class Person
-{
-    public string $name = '';
-    public int $age = 0;
-    public string $gender = '';
-}
-
 class PouchTest extends TestCase
 {
     CONST CACHE_FILE = './tests/cachefiletest';
@@ -29,6 +22,7 @@ class PouchTest extends TestCase
         $timestamp = filemtime(self::CACHE_FILE);
         $this->assertSame($timestamp, filemtime(self::CACHE_FILE));
 
+        // person
         $person = $pouch->get(Person::class);
         $this->assertNotInstanceOf(Person::class, $person);
         
@@ -51,6 +45,30 @@ class PouchTest extends TestCase
 
         clearstatcache(true, self::CACHE_FILE);
         $this->assertSame($timestamp, filemtime(self::CACHE_FILE));
+
+        // vechicle
+        $vehicle = $pouch->get(Vehicle::class);
+        $this->assertNotInstanceOf(Vehicle::class, $vehicle);
+        
+        $vehicle = new Vehicle($person);
+        sleep(1);
+        $pouch->add($vehicle);
+
+        $vehicle = $pouch->get(Vehicle::class);
+        $this->assertInstanceOf(Vehicle::class, $vehicle);
+
+        clearstatcache(true, self::CACHE_FILE);
+        $this->assertNotSame($timestamp, filemtime(self::CACHE_FILE));
+
+        $timestamp = filemtime(self::CACHE_FILE);
+        sleep(1);
+        $pouch->add($vehicle);
+
+        $vehicle = $pouch->get(Vehicle::class);
+        $this->assertInstanceOf(Vehicle::class, $vehicle);
+
+        clearstatcache(true, self::CACHE_FILE);
+        $this->assertSame($timestamp, filemtime(self::CACHE_FILE));
     }
 
     public function testShouldBeAbleToGetDataFromCache()
@@ -63,8 +81,42 @@ class PouchTest extends TestCase
         $person = $pouch->get(Person::class);
         $this->assertInstanceOf(Person::class, $person);
 
+        $vehicle = new Vehicle($person);
+        $pouch->add($vehicle);
+
+        $vehicle = $pouch->get(Vehicle::class);
+        $this->assertInstanceOf(Vehicle::class, $vehicle);
+
+        sleep(1);
         touch(__FILE__); // cause a mismatch in file timetamp
+
         $person = $pouch->get(Person::class);
-        $this->assertNull($person);
+        $this->assertInstanceOf(Person::class, $person);
+
+        $vehicle = $pouch->get(Vehicle::class);
+        $this->assertInstanceOf(Vehicle::class, $vehicle);
+    }
+}
+
+class Person
+{
+    public string $name = '';
+    public int $age = 0;
+    public string $gender = '';
+}
+
+class Vehicle
+{
+    public function __construct(
+        public Person $owner,
+        public readonly string $model = '',
+        public readonly string $color = '',
+        public readonly string $manufacturer = '',
+        public readonly string $type = '',
+        public readonly string $dimension = '',
+        public readonly string $fuelCapacity = ''
+    )
+    {
+        
     }
 }
