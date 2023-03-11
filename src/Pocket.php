@@ -4,7 +4,7 @@ namespace Pocket;
 class Pocket
 {
     private array $classPouch = [];
-    private Pouch $pouch;
+    private readonly Pouch $pouch;
 
     public function __construct()
     {
