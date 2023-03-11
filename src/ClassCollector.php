@@ -10,8 +10,8 @@ use Pocket\Exception\ClassNotFoundException;
  */
 class ClassCollector implements \Iterator
 {
-    private $classes = [];
-    private $key = 0;
+    private array $classes = [];
+    private int $key = 0;
 
     public function __construct(string $class)
     {

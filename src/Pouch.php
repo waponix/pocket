@@ -1,7 +1,6 @@
 <?php
 namespace Pocket;
 
-use Exception;
 use Pocket\Exception\FolderNotFoundException;
 use Pocket\Exception\FolderNotWritableException;
 use ReflectionClass;
@@ -10,81 +9,113 @@ class Pouch
 {
     CONST EOL = "\n";
 
-    private string $format = '%s.%d.%s' . self::EOL;
-    private string $cacheFile = '';
+    private readonly string $lineFormat;
     private array $cache = [];
 
-    public function __construct(string $cacheFile)
+    public function __construct(public readonly string $cacheFile)
     {
-        $this->cacheFile = $cacheFile;
+        $this->lineFormat = '%s.%d.%s.%s' . self::EOL;
         $this
-            ->createFile()
-            ->loadCache();
+            ->createCacheFile()
+            ->loadDataFromCache();
     }
 
     /**
+     * @var object $object
      * store the data into cache giving an id
      */
     public function add(object $object): Pouch
     {
-        $reflectionClass = new ReflectionClass($object);
-        $id = md5($reflectionClass->getName());
-        $timestamp = filemtime($reflectionClass->getFileName());
+        $reflectionClass = new ReflectionClass($object::class);
 
-        if (isset($this->cache[$id]) && $this->get($id)[0] === $timestamp) {
+        $id = md5($reflectionClass->getName());
+
+        if ($this->isDataValid($id)) {
             return $this; // no need to update cache
         }
 
+        $classFile = $reflectionClass->getFileName();
+        $hash = md5_file($classFile);
+        clearstatcache(true, $classFile);
+        $timestamp = filemtime($classFile);
+
         $this->cache[$id] = [
             $timestamp,
+            $hash,
             $object
         ];
 
         $object = base64_encode(serialize($object));
 
-        $cache = fopen($this->cacheFile, 'w');
-        $line = sprintf($this->format, $id, $timestamp, $object);
-        fputs($cache, $line, strlen($line));
+        $cache = fopen($this->cacheFile, 'a');
+        $line = sprintf($this->lineFormat, $id, $timestamp, $hash, $object);
+        fwrite($cache, $line, strlen($line));
         fclose($cache);
 
         return $this;
     }
 
-    public function get(string $class)
+    /**
+     * @var string $class
+     * @return object|null
+     */
+    public function get(string $class): ?object
     {
         $id = md5($class);
-        if (isset($this->cache[$id])) {
-            return $this->cache[$id][1];
+        if ($this->isDataValid($id)) {
+            return $this->cache[$id][2];
         }
 
         return null;
     }
 
-    private function loadCache(): mixed
+    private function isDataValid(string $id): bool
+    {
+        $data = $this->cache[$id] ?? false;
+
+        if ($data === false) return false;
+
+        if (count($data) != 3) return false;
+
+        $reflectionClass = new ReflectionClass($data[2]);
+        $classFile = $reflectionClass->getFileName();
+
+        clearstatcache(true, $classFile);
+        if (filemtime($classFile) !== $data[0]) return false;
+
+        if (md5_file($classFile) !== $data[1]) return false;
+
+        return true;
+    }
+
+    private function loadDataFromCache(): mixed
     {
         $cache = fopen($this->cacheFile, 'r');
         while (!feof($cache)) {
             $line = fgets($cache);
             $data = explode('.', $line);
-            if (count($data) === 4) {
+            if (count($data) != 4) {
                 continue;
             }
 
-            $object = base64_decode($data[2]);
+            $object = base64_decode($data[3]);
             if ($object === false) {
                 continue;
             }
 
             $this->cache[$data[0]] = [
-                $data[1],
+                (int) $data[1],
+                $data[2],
                 unserialize($object)
             ];
         }
 
+        fclose($cache);
+
         return $this;
     }
 
-    private function createFile()
+    private function createCacheFile(): Pouch
     {
         $dir = dirname($this->cacheFile);
         if (!file_exists($dir)) {
