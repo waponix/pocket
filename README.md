@@ -1,3 +1,2 @@
 # pocket
-
-Pocket is inspired by Symfony's "service container" that aims to automatically contructs objects
+Inspired by Symfony's "service container". The aim is to automatically contruct objects, like pulling out tools from your "pocket"
