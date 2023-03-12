@@ -26,7 +26,13 @@ class ClassCollector implements \Iterator
             throw new ClassNotFoundException($class . " does not exist");
         }
 
+        if (in_array($class, $this->classes)) {
+            // do not insert again if already in the stack
+            return;
+        }
+
         if (!method_exists($class, '__construct')) {
+            $this->classes[] = $class;
             return;
         }
 
