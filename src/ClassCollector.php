@@ -7,6 +7,7 @@ use Pocket\Exception\ClassNotFoundException;
  * Class ClassIterator
  * @package src\Pocket\ClassIterator
  * This iterator class will stack the dependencies first before the main class, to be later on read and loaded by the Pocket class
+ * 
  */
 class ClassCollector implements \Iterator
 {

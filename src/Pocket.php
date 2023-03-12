@@ -16,15 +16,15 @@ class Pocket
         $this->pouch = new Pouch('./src/pocketcache');
     }
     
-    public function get(string $class): ?object
+    public function &get(string $class): ?object
     {
         return $this->loadObject($class);
     }
 
-    private function loadObject(string $class)
+    private function &loadObject(string $class)
     {
         // try loading the object from the cache
-        $object = $this->pouch->get($class);
+        $object = &$this->pouch->get($class);
 
         if (is_object($object) && get_class($object) === $class) {
             return $object;
@@ -44,7 +44,7 @@ class Pocket
            $this->pouch->add($object);
         }
 
-        return $this->pouch->get($object);
+        return $this->pouch->get($class);
     }
 
     private function collectParameters(ReflectionClass $reflectionClass): ?array
