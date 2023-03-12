@@ -16,15 +16,15 @@ class Pocket
         $this->pouch = new Pouch('./src/pocketcache');
     }
     
-    public function get(string $class): ?object
+    public function &get(string $class): ?object
     {
         return $this->loadObject($class);
     }
 
-    private function loadObject(string $class)
+    private function &loadObject(string $class)
     {
         // try loading the object from the cache
-        $object = $this->pouch->get($class);
+        $object = &$this->pouch->get($class);
 
         if (is_object($object) && get_class($object) === $class) {
             return $object;
@@ -44,7 +44,7 @@ class Pocket
            $this->pouch->add($object);
         }
 
-        return $this->pouch->get($object);
+        return $this->pouch->get($class);
     }
 
     private function collectParameters(ReflectionClass $reflectionClass): ?array
@@ -65,7 +65,24 @@ class Pocket
         } catch (ReflectionException $exception) {
             $parameterRealValues = null;
         }
+        try {
+            $parameters = $reflectionClass->getMethod('__construct')->getParameters();
+            $parameterRealValues = [];
+            foreach ($parameters as $parameter) {
+                if (!$parameter instanceof ReflectionParameter) continue;
 
+                // TODO: for builtin parameters (e.g. string, integer) should be able to get value from a configuration
+
+                // try to load class
+                if (!$parameter->getType()->isBuiltin()) {
+                    $parameterRealValues[$parameter->getPosition()] = $this->loadObject((string) $parameter->getType());
+                }
+            }
+        } catch (ReflectionException $exception) {
+            $parameterRealValues = null;
+        }
+
+        return $parameterRealValues;
         return $parameterRealValues;
     }
 }
