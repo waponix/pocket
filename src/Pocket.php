@@ -65,7 +65,24 @@ class Pocket
         } catch (ReflectionException $exception) {
             $parameterRealValues = null;
         }
+        try {
+            $parameters = $reflectionClass->getMethod('__construct')->getParameters();
+            $parameterRealValues = [];
+            foreach ($parameters as $parameter) {
+                if (!$parameter instanceof ReflectionParameter) continue;
 
+                // TODO: for builtin parameters (e.g. string, integer) should be able to get value from a configuration
+
+                // try to load class
+                if (!$parameter->getType()->isBuiltin()) {
+                    $parameterRealValues[$parameter->getPosition()] = $this->loadObject((string) $parameter->getType());
+                }
+            }
+        } catch (ReflectionException $exception) {
+            $parameterRealValues = null;
+        }
+
+        return $parameterRealValues;
         return $parameterRealValues;
     }
 }
