@@ -3,8 +3,12 @@ namespace Pocket;
 
 use Pocket\Exception\FolderNotFoundException;
 use Pocket\Exception\FolderNotWritableException;
+use Pocket\PouchScanner;
 use ReflectionClass;
 
+/**
+ * TODO:    1.) Develop a mechanism that will automatically remove unused cache data from file
+ */
 class Pouch
 {
     CONST EOL = "\n";
@@ -15,9 +19,7 @@ class Pouch
     public function __construct(public readonly string $cacheFile)
     {
         $this->lineFormat = '%s.%d.%s.%s' . self::EOL;
-        $this
-            ->createCacheFile()
-            ->loadDataFromCache();
+        $this->createCacheFile();
     }
 
     /**
@@ -30,7 +32,7 @@ class Pouch
 
         $id = md5($reflectionClass->getName());
 
-        if ($this->isDataValid($id)) {
+        if ($this->loadAndValidate($id)) {
             return $this; // no need to update cache
         }
 
@@ -49,7 +51,7 @@ class Pouch
 
         $cache = fopen($this->cacheFile, 'a');
         $line = sprintf($this->lineFormat, $id, $timestamp, $hash, $object);
-        fwrite($cache, $line, strlen($line));
+        fputs($cache, $line, strlen($line));
         fclose($cache);
 
         return $this;
@@ -59,21 +61,37 @@ class Pouch
      * @var string $class
      * @return object|null
      */
-    public function get(string $class): ?object
+    public function &get(string $class): ?object
     {
         $id = md5($class);
-        if ($this->isDataValid($id)) {
+
+        if ($this->loadAndValidate($id)) {
             return $this->cache[$id][2];
         }
 
         return null;
     }
 
-    private function isDataValid(string $id): bool
+    /**
+     * @return void
+     */
+    public function clearCache()
+    {
+        $this->createCacheFile();
+        file_put_contents($this->cacheFile, '');
+    }
+
+    private function loadAndValidate(string $id): bool
     {
         $data = $this->cache[$id] ?? false;
+        // try to load data from cache
+        if ($data === false) {
+            $data = &$this->loadCacheFromId($id);    
+        }
 
-        if ($data === false) return false;
+        if ($data === null) return false;
+
+        $this->cache[$id] = &$data;
 
         if (count($data) != 3) return false;
 
@@ -88,11 +106,14 @@ class Pouch
         return true;
     }
 
-    private function loadDataFromCache(): mixed
+    private function &loadCacheFromId(string $id): ?array
     {
-        $cache = fopen($this->cacheFile, 'r');
-        while (!feof($cache)) {
-            $line = fgets($cache);
+        $pouchScanner = new PouchScanner($this->cacheFile);
+
+        foreach ($pouchScanner as $line) {
+            // check if the id is found at the first position
+            if (strpos(needle: "$id.", haystack: $line) !== 0) continue;
+
             $data = explode('.', $line);
             if (count($data) != 4) {
                 continue;
@@ -103,16 +124,14 @@ class Pouch
                 continue;
             }
 
-            $this->cache[$data[0]] = [
+            return [
                 (int) $data[1],
                 $data[2],
                 unserialize($object)
             ];
         }
 
-        fclose($cache);
-
-        return $this;
+        return null;
     }
 
     private function createCacheFile(): Pouch
