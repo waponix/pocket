@@ -1,9 +1,9 @@
 <?php
-namespace Pocket;
+namespace Waponix\Pocket;
 
-use Pocket\Exception\FolderNotFoundException;
-use Pocket\Exception\FolderNotWritableException;
-use Pocket\PouchScanner;
+use Waponix\Pocket\Exception\FolderNotFoundException;
+use Waponix\Pocket\Exception\FolderNotWritableException;
+use Waponix\Pocket\Iterator\PouchScanner;
 use ReflectionClass;
 
 /**

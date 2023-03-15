@@ -1,5 +1,5 @@
 <?php
-namespace Pocket\Exception;
+namespace Waponix\Pocket\Exception;
 
 class ClassNotFoundException extends \Exception
 {
