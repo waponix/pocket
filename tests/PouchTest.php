@@ -1,7 +1,8 @@
 <?php
+include_once __DIR__  . '/Classess.php';
 
 use PHPUnit\Framework\TestCase;
-use Pocket\Pouch;
+use Waponix\Pocket\Pouch;
 
 class PouchTest extends TestCase
 {
@@ -50,7 +51,8 @@ class PouchTest extends TestCase
         $vehicle = $pouch->get(Vehicle::class);
         $this->assertNotInstanceOf(Vehicle::class, $vehicle);
         
-        $vehicle = new Vehicle($person);
+        $manufacturer = new Manufacturer($person);
+        $vehicle = new Vehicle($person, $manufacturer);
         sleep(1);
         $pouch->add($vehicle);
 
@@ -81,7 +83,8 @@ class PouchTest extends TestCase
         $person = $pouch->get(Person::class);
         $this->assertInstanceOf(Person::class, $person);
 
-        $vehicle = new Vehicle($person);
+        $manufacturer = new Manufacturer($person);
+        $vehicle = new Vehicle($person, $manufacturer);
         $pouch->add($vehicle);
 
         $vehicle = $pouch->get(Vehicle::class);
@@ -95,28 +98,5 @@ class PouchTest extends TestCase
 
         $vehicle = $pouch->get(Vehicle::class);
         $this->assertInstanceOf(Vehicle::class, $vehicle);
-    }
-}
-
-class Person
-{
-    public string $name = '';
-    public int $age = 0;
-    public string $gender = '';
-}
-
-class Vehicle
-{
-    public function __construct(
-        public Person $owner,
-        public readonly string $model = '',
-        public readonly string $color = '',
-        public readonly string $manufacturer = '',
-        public readonly string $type = '',
-        public readonly string $dimension = '',
-        public readonly string $fuelCapacity = ''
-    )
-    {
-        
     }
 }

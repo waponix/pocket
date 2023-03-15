@@ -1,8 +1,9 @@
 <?php
+include_once __DIR__ . '/Classess.php';
 
 use PHPUnit\Framework\TestCase;
-use Pocket\Exception\ClassNotFoundException;
-use Pocket\Pocket;
+use Waponix\Pocket\Exception\ClassNotFoundException;
+use Waponix\Pocket\Pocket;
 
 class PocketTest extends TestCase
 {
@@ -28,25 +29,4 @@ class PocketTest extends TestCase
 
         // $this->assertSame($person, $vehicle->owner);
     }
-}
-
-class Person
-{
-}
-
-class Manufacturer
-{
-    public function __construct(
-        public Person $ceo
-    )
-    {}
-}
-
-class Vehicle
-{
-    public function __construct(
-        public Person $owner,
-        public Manufacturer $manufacturer
-    )
-    {}
 }

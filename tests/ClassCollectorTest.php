@@ -1,8 +1,8 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use Pocket\ClassCollector;
-use Pocket\Exception\ClassNotFoundException;
+use Waponix\Pocket\Exception\ClassNotFoundException;
+use Waponix\Pocket\Iterator\ClassCollector;
 
 class ClassCollectorTest extends TestCase
 {

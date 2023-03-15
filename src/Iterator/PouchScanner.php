@@ -1,12 +1,10 @@
 <?php
-namespace Pocket;
-
-use Iterator;
+namespace Waponix\Pocket\Iterator;
 
 /**
  * Iterator that will read the cache file from bottom to top
  */
-class PouchScanner implements Iterator
+class PouchScanner implements \Iterator
 {
     private $stream;
     private int $key = 0;
