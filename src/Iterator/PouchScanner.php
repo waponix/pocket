@@ -32,7 +32,7 @@ class PouchScanner implements \Iterator
     public function valid(): bool
     {
         $isValid = $this->stream !== false && fseek($this->stream, $this->key, SEEK_END) !== -1;
-        if (!$isValid && $this->stream !== false) fclose($this->stream); // try close the file
+        if (!$isValid && $this->stream !== false) fclose($this->stream); // try to close the file
 
         return $isValid;
     }

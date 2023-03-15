@@ -112,7 +112,7 @@ class Pocket
         return $args;
     }
 
-    private function getParameter($key): mixed
+    private function getParameter(string $key): mixed
     {
         $ids = explode('.', $key);
         
@@ -120,7 +120,7 @@ class Pocket
         
         while(count($ids)) {
             $id = array_shift($ids);
-            if (!isset($value[$id])) throw new ParameterNotFoundException('The parameter ' . $key . ' is not found in the configuration');
+            if (!isset($value[$id])) throw new ParameterNotFoundException('The parameter @' . $key . ' is not found in the configuration');
 
             $value = &$value[$id];
         }
