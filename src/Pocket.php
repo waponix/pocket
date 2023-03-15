@@ -1,10 +1,10 @@
 <?php
-namespace Pocket;
+namespace Waponix\Pocket;
 
-use Pocket\Exception\ClassNotFoundException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionParameter;
+use Waponix\Pocket\Iterator\ClassCollector;
 
 class Pocket
 {

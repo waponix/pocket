@@ -1,11 +1,10 @@
 <?php
-namespace Pocket;
+namespace Waponix\Pocket\Iterator;
 
-use Pocket\Exception\ClassNotFoundException;
+use Waponix\Pocket\Exception\ClassNotFoundException;
 
 /**
- * Class ClassIterator
- * @package src\Pocket\ClassIterator
+ * Class ClassCollector
  * This iterator class will stack the dependencies first before the main class, to be later on read and loaded by the Pocket class
  * 
  */
