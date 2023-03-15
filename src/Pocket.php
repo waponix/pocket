@@ -4,16 +4,20 @@ namespace Waponix\Pocket;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionParameter;
+use Waponix\Pocket\Attribute\Service;
+use Waponix\Pocket\Exception\ParameterNotFoundException;
 use Waponix\Pocket\Iterator\ClassCollector;
 
 class Pocket
 {
-    private array $classPouch = [];
     private readonly Pouch $pouch;
+    private array $parameters = [];
+    private array $classMeta = [];
 
-    public function __construct()
+    public function __construct(array $parameters = [])
     {
         $this->pouch = new Pouch('./src/pocketcache');
+        $this->parameters = $parameters;
     }
     
     public function &get(string $class): ?object
@@ -21,7 +25,13 @@ class Pocket
         return $this->loadObject($class);
     }
 
-    private function &loadObject(string $class)
+    public function setParameters(array $parameters): Pocket
+    {
+        $this->parameters = $parameters;
+        return $this;
+    }
+
+    private function &loadObject(string $class): ?object
     {
         // try loading the object from the cache
         $object = &$this->pouch->get($class);
@@ -50,33 +60,35 @@ class Pocket
     private function collectParameters(ReflectionClass $reflectionClass): ?array
     {
         try {
-            $parameters = $reflectionClass->getMethod('__construct')->getParameters();
+            $parameters = $reflectionClass->getMethod('__construct')?->getParameters();
             $parameterRealValues = [];
+            $metaArgs = $this->getMetaArgs($reflectionClass);
+
             foreach ($parameters as $parameter) {
                 if (!$parameter instanceof ReflectionParameter) continue;
 
-                // TODO: for builtin parameters (e.g. string, integer) should be able to get value from a configuration
+                // when the parameter has a meta value
+                if (isset($metaArgs[$parameter->getName()])) {
+                    $value = $metaArgs[$parameter->getName()];
+                    
+                    if (strpos(needle: '@', haystack: $value) === 0) {
+                        $value = $this->getParameter(substr($value, 1));
+                    }
 
-                // try to load class
-                if (!$parameter->getType()->isBuiltin()) {
-                    $parameterRealValues[$parameter->getPosition()] = $this->loadObject((string) $parameter->getType());
+                    if (!$parameter->getType()->isBuiltin()) {
+                        $value = $this->loadObject($value);
+                    }
+
+                    $parameterRealValues[$parameter->getPosition()] = $value;
+                    
+                    continue;
+                } 
+
+                if ($parameter->getType()->isBuiltin() === true) {
+                    throw new ParameterNotFoundException('The parameter ' . $parameter->getName() . ' is not explicitly defined');
                 }
-            }
-        } catch (ReflectionException $exception) {
-            $parameterRealValues = null;
-        }
-        try {
-            $parameters = $reflectionClass->getMethod('__construct')->getParameters();
-            $parameterRealValues = [];
-            foreach ($parameters as $parameter) {
-                if (!$parameter instanceof ReflectionParameter) continue;
 
-                // TODO: for builtin parameters (e.g. string, integer) should be able to get value from a configuration
-
-                // try to load class
-                if (!$parameter->getType()->isBuiltin()) {
-                    $parameterRealValues[$parameter->getPosition()] = $this->loadObject((string) $parameter->getType());
-                }
+                $parameterRealValues[$parameter->getPosition()] = $this->loadObject((string) $parameter->getType());
             }
         } catch (ReflectionException $exception) {
             $parameterRealValues = null;
@@ -84,5 +96,35 @@ class Pocket
 
         return $parameterRealValues;
         return $parameterRealValues;
+    }
+
+    private function getMetaArgs(\ReflectionClass $reflectionClass): array
+    {
+        $serviceMetas = $reflectionClass->getAttributes(Service::class);
+        $args = [];
+
+        foreach ($serviceMetas as $serviceMeta) {
+            $serviceMeta = $serviceMeta->newInstance();
+            if (!$serviceMeta instanceof Service) continue;
+            $args = array_merge($args, $serviceMeta->getArgs());
+        }
+
+        return $args;
+    }
+
+    private function getParameter($key): mixed
+    {
+        $ids = explode('.', $key);
+        
+        $value = &$this->parameters;
+        
+        while(count($ids)) {
+            $id = array_shift($ids);
+            if (!isset($value[$id])) throw new ParameterNotFoundException('The parameter ' . $key . ' is not found in the configuration');
+
+            $value = &$value[$id];
+        }
+
+        return $value;
     }
 }
