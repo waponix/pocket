@@ -4,6 +4,24 @@ use Waponix\Pocket\Attribute\Service;
 
 class Person
 {
+    public readonly string $name;
+    public readonly int $age;
+    public readonly string $gender;
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    private function getAge()
+    {
+        return $this->age;
+    }
+
+    protected function getGender()
+    {
+        return $this->gender;
+    }
 }
 
 #[Service(args: ['name' => '@person.john.name', 'age' => '@person.john.age', 'gender' => '@person.john.gender', 'email' => '@person.john.email'])]
