@@ -27,7 +27,7 @@ class PouchTest extends TestCase
         $person = $pouch->get(Person::class);
         $this->assertNotInstanceOf(Person::class, $person);
         
-        $person = new Person(name: '');
+        $person = new Person();
         sleep(1);
         $pouch->add($person);
 
@@ -77,7 +77,7 @@ class PouchTest extends TestCase
     {
         $pouch = new Pouch(self::CACHE_FILE);
         
-        $person = new Person(name: '');
+        $person = new Person();
         $pouch->add($person);
 
         $person = $pouch->get(Person::class);

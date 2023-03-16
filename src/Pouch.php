@@ -51,6 +51,7 @@ class Pouch
 
         $cache = fopen($this->cacheFile, 'a');
         $line = sprintf($this->lineFormat, $id, $timestamp, $hash, $object);
+
         fputs($cache, $line, strlen($line));
         fclose($cache);
 

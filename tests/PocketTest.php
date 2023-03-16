@@ -2,7 +2,9 @@
 include_once __DIR__ . '/Classess.php';
 
 use PHPUnit\Framework\TestCase;
+use Waponix\Pocket\Exception\ClassException;
 use Waponix\Pocket\Exception\ClassNotFoundException;
+use Waponix\Pocket\Exception\MethodNotFoundException;
 use Waponix\Pocket\Pocket;
 
 class PocketTest extends TestCase
@@ -84,20 +86,31 @@ class PocketTest extends TestCase
         $this->assertSame($this->parameters['person']['john']['email'], $person->email);
     }
 
+    public function testShouldBeAbleToGetJohnsName()
+    {
+        $pocket = new Pocket;
+        $pocket->setParameters($this->parameters);
+
+        $this->assertSame('John Doe', $pocket->invoke(John::class, 'getName'));
+    }
+
+    public function testShouldThrowClassException()
+    {
+        $pocket = new Pocket;
+        $pocket->setParameters($this->parameters);
+
+        $this->expectException(ClassException::class);
+        $pocket->invoke(John::class, 'getAge');
+
+        $this->expectException(ClassException::class);
+        $pocket->invoke(John::class, 'getGender');
+    }
+
     // public function testShouldHaveMetaData()
     // {
     //     $pocket = new Pocket;
 
-    //     $pocket->setParameters([
-    //         'person' => [
-    //             'john' => [
-    //                 'name' => 'John Doe',
-    //                 'age' => 22,
-    //                 'gender' => 'male',
-    //                 'email' => 'johndoe@mailme.com'
-    //             ]
-    //         ]
-    //     ]);
+    //     $pocket->setParameters($this->parameters);
 
     //     $reflectionClass = new ReflectionClass(John::class);
     //     $metaArgs = $pocket->getMetaArgs($reflectionClass);
