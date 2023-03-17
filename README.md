@@ -38,3 +38,4 @@ $pocket = new Pocket();
 
 $person = $pocket->get(Vehicle::class);
 ```
+In the example above, the argument `$owner` will be injected with an instance of class Person. In any case that class Person also has any argument that is an object, those will be automatically injected as well
