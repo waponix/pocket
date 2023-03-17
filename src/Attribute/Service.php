@@ -11,7 +11,8 @@ use Waponix\Pocket\Attribute\Interface\ServiceAttributeInterface;
 class Service implements ServiceAttributeInterface
 {
     public function __construct(
-        private readonly array $args
+        private readonly array $args = [],
+        private readonly ?Factory $factory = null
     ) {
 
     }
@@ -19,5 +20,10 @@ class Service implements ServiceAttributeInterface
     public function getArgs(): array
     {
         return $this->args;
+    }
+
+    public function getFactory(): ?Factory
+    {
+        return $this->factory;
     }
 }

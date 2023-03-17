@@ -4,6 +4,7 @@ namespace Waponix\Pocket;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionParameter;
+use Waponix\Pocket\Attribute\Factory;
 use Waponix\Pocket\Attribute\Service;
 use Waponix\Pocket\Exception\ClassException;
 use Waponix\Pocket\Exception\ClassNotFoundException;
@@ -26,7 +27,7 @@ class Pocket
         return $this->loadObject($class);
     }
 
-    public function invoke(string $class, string $method): mixed
+    public function invoke(string $class, string $method, ?array $args = []): mixed
     {
         if (!class_exists($class)) {
             throw new ClassNotFoundException($class . ' was not found');
@@ -42,7 +43,7 @@ class Pocket
             throw new ClassException('The class ' . $class . ' has no public access to call method ' . $method . '()');
         }
 
-        $args = $this->collectParameters($reflectionMethod);
+        $args = $this->collectParameters($reflectionMethod, $args);
         $object = null;
         if (!$reflectionMethod->isStatic()) {
             $object = $this->get($class);
@@ -62,39 +63,55 @@ class Pocket
 
     private function &loadObject(string $class): ?object
     {
-        // try loading the object from the cache
-        $object = &$this->pouch->get($class);
-
-        if (is_object($object) && get_class($object) === $class) {
-            return $object;
-        }
-
+        $mainClass = $class;
         $classCollector = new ClassCollector($class);
 
         foreach ($classCollector as $class) {
-           $reflectionClass = new ReflectionClass($class);
-           $parameters = null;
+            $reflectionClass = new ReflectionClass($class);
+            $factory = null;
+            $metaArgs = $this->getMetaArgs($reflectionClass, $factory); // get the meta args from the class level
+            $parameters = null;
 
-           if (method_exists($class, '__construct')) {
+            if ($factory instanceof Factory) {
+                $class = $factory->getClass(); // alias the class with the factory class
+                // try to get object in cache
+                $object = $this->pouch->get($class);
+
+                if (is_object($object) && get_class($object) === $class) {
+                    // when found no need to do processing
+                    continue;
+                }
+
+                $object = $this->invoke($class, $factory->getMethod(), $factory->getArgs());
+                $this->pouch->add($object);
+                continue;
+            }
+        
+            $object = &$this->pouch->get($class);
+
+            if (is_object($object) && get_class($object) === $class) {
+                continue;
+            }
+
+            if (method_exists($class, '__construct')) {
                 $reflectionMethod = $reflectionClass->getMethod('__construct');
 
                 if (!$reflectionMethod->isPublic()) {
                     throw new ClassException('The method __construct of class ' . $class . ' is not accessible or not defined as public');
                 }
-
-                $metaArgs = $this->getMetaArgs($reflectionClass); // get the meta args from the class level
+                
                 $parameters = $this->collectParameters($reflectionMethod, $metaArgs);
-           }
+            }
 
-           $object = match (true) {
+            $object = match (true) {
                 is_array($parameters) => $reflectionClass->newInstanceArgs($parameters),
                 $parameters === null => $reflectionClass->newInstance()
-           };
+            };
 
-           $this->pouch->add($object);
+            $this->pouch->add($object);
         }
 
-        return $this->pouch->get($class);
+        return $this->pouch->get($mainClass);
     }
 
     private function collectParameters(ReflectionMethod $reflectionMethod, array $metaArgs = []): ?array
@@ -115,6 +132,7 @@ class Pocket
                 }
 
                 if (!$parameter->getType()->isBuiltin()) {
+                    // the value could be a class try loading it
                     $value = $this->loadObject($value);
                 }
 
@@ -134,7 +152,7 @@ class Pocket
         return $parameterRealValues;
     }
 
-    private function getMetaArgs(\ReflectionClass | \ReflectionMethod $reflection): array
+    private function getMetaArgs(\ReflectionClass | \ReflectionMethod $reflection, ?Factory &$factory = null): array
     {
         $serviceMetas = $reflection->getAttributes(Service::class);
         $args = [];
@@ -142,6 +160,7 @@ class Pocket
         foreach ($serviceMetas as $serviceMeta) {
             $serviceMeta = $serviceMeta->newInstance();
             if (!$serviceMeta instanceof Service) continue;
+            $factory = $serviceMeta->getFactory() ?? $factory;
             $args = array_merge($args, $serviceMeta->getArgs());
         }
 

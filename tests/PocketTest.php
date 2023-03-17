@@ -22,6 +22,12 @@ class PocketTest extends TestCase
                 'age' => 20,
                 'gender' => 'female',
                 'email' => 'janedoe@mailme.com'
+            ],
+            'bob' => [
+                'name' => 'Bob',
+                'age' => 25,
+                'gender' => 'male',
+                'email' => 'bob@ong.com'
             ]
         ]
     ];
@@ -112,6 +118,36 @@ class PocketTest extends TestCase
         $pocket->setParameters($this->parameters);
 
         $this->assertSame('person', $pocket->invoke(John::class, 'getId'));
+    }
+
+    public function testShouldBeAbleToCreateBobFromFactory()
+    {
+        $pocket = new Pocket;
+        $pocket->setParameters($this->parameters);
+
+        $vehicle = $pocket->get(BobsVehicle::class);
+        $this->assertInstanceOf(Vehicle::class, $vehicle);
+        $this->assertInstanceOf(BobsVehicle::class, $vehicle);
+
+        $manufacturer = $vehicle->manufacturer;
+        $this->assertInstanceOf(Manufacturer::class, $manufacturer);
+        $this->assertInstanceOf(Suzuki::class, $manufacturer);
+
+        $ceo = $manufacturer->ceo;
+        $this->assertInstanceOf(Person::class, $ceo);
+        $this->assertInstanceOf(John::class, $ceo);
+        $this->assertSame($this->parameters['person']['john']['name'], $ceo->name);
+        $this->assertSame($this->parameters['person']['john']['age'], $ceo->age);
+        $this->assertSame($this->parameters['person']['john']['gender'], $ceo->gender);
+        $this->assertSame($this->parameters['person']['john']['email'], $ceo->email);
+
+        $person = $vehicle->owner;
+        $this->assertInstanceOf(Bob::class, $person);
+        $this->assertInstanceOf(Person::class, $person);
+        $this->assertSame($this->parameters['person']['bob']['name'], $person->name);
+        $this->assertSame($this->parameters['person']['bob']['age'], $person->age);
+        $this->assertSame($this->parameters['person']['bob']['gender'], $person->gender);
+        $this->assertSame($this->parameters['person']['bob']['email'], $person->email);
     }
 
     // public function testShouldHaveMetaData()
