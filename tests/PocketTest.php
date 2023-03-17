@@ -106,6 +106,14 @@ class PocketTest extends TestCase
         $pocket->invoke(John::class, 'getGender');
     }
 
+    public function testShouldBeAbleToInvokeStaticMethod()
+    {
+        $pocket = new Pocket;
+        $pocket->setParameters($this->parameters);
+
+        $this->assertSame('person', $pocket->invoke(John::class, 'getId'));
+    }
+
     // public function testShouldHaveMetaData()
     // {
     //     $pocket = new Pocket;

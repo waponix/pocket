@@ -43,7 +43,10 @@ class Pocket
         }
 
         $args = $this->collectParameters($reflectionMethod);
-        $object = $this->get($class);
+        $object = null;
+        if (!$reflectionMethod->isStatic()) {
+            $object = $this->get($class);
+        }
 
         return match (true) {
             is_array($args) => $reflectionMethod->invokeArgs($object, $args),
