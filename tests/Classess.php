@@ -4,6 +4,8 @@ use Waponix\Pocket\Attribute\Service;
 
 class Person
 {
+    const ID = 'person';
+
     public readonly string $name;
     public readonly int $age;
     public readonly string $gender;
@@ -21,6 +23,11 @@ class Person
     protected function getGender()
     {
         return $this->gender;
+    }
+
+    public static function getId(): string
+    {
+        return self::ID;
     }
 }
 
