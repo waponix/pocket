@@ -1,10 +1,10 @@
 # pocket
-Inspired by Symfony's "service container". The aim is to be able to get tools/services faster by instantiating the objects and automatically inject the dependencies, like a magician pulling an object out of his pocket.
+Is a service container that considers all loadable classes inside a project as a service.
 
 Pocket is currently being developed in `PHP 8`, and will take advantage of it's new features as much as possible
 
 ## Introduction
-Pocket considers  all Classes as Services, you can pass any class name to pocket's get() method and it will try to load the object for you
+Pocket considers all classes as aervice, you can pass any class name to pocket's get() method without doing any registration and it will try to load the object for you
 > Note: you need to setup your own autoloading because pocket won't handle that for you
 
 Example:
@@ -45,6 +45,7 @@ $person = $pocket->get(Vehicle::class);
 ```
 In the example above, the argument `$owner` will be injected with an instance of class Person. In any case that class Person also has any argument that is excpected to be class instance, those will automatically be injected as well
 
+##### **But what about other argument types?**
 ##### **But what about other argument types?**
 For other arguments, pocket cannot automatically inject its values and will throw an exception, but this problem can be solved by using Attribute
 
