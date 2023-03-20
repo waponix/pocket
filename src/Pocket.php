@@ -32,17 +32,17 @@ class Pocket
     public function invoke(string $class, string $method, ?array $args = []): mixed
     {
         if (!class_exists($class)) {
-            throw new ClassNotFoundException($class . ' was not found');
+            throw new ClassNotFoundException('Class ' . $class . ' does not exist');
         }
 
         if (!method_exists($class, $method)) {
-            throw new ClassException('The class ' . $class . ' does not have or has no public access to call method ' . $method . '()');
+            throw new ClassException('Class ' . $class . ' does not have or has no public access to call method ' . $method . '()');
         }
 
         $reflectionMethod = new ReflectionMethod($class, $method);
         
         if (!$reflectionMethod->isPublic()) {
-            throw new ClassException('The class ' . $class . ' has no public access to call method ' . $method . '()');
+            throw new ClassException('Class ' . $class . ' has no public access to call method ' . $method . '()');
         }
 
         $args = $this->collectParameters($reflectionMethod, $args);
@@ -69,10 +69,9 @@ class Pocket
         return $this;
     }
 
-    private function &loadObject(string $class): ?object
+    private function &loadObject(string $targetClass): ?object
     {
-        $targetClass = $class;
-        $classCollector = new ClassCollector($class);
+        $classCollector = new ClassCollector($targetClass);
 
         foreach ($classCollector as $class) {
             $reflectionClass = new ReflectionClass($class);
@@ -81,7 +80,7 @@ class Pocket
                 $isService = count($reflectionClass->getAttributes(Service::class)) > 0;
                 
                 if ($isService === false) {
-                    throw new ClassException($class . ' is not a registered service');
+                    throw new ClassException('Class ' . $class . ' is not a registered service');
                 }
             }
 
@@ -118,7 +117,7 @@ class Pocket
                 $reflectionMethod = $reflectionClass->getMethod('__construct');
 
                 if (!$reflectionMethod->isPublic()) {
-                    throw new ClassException('The method __construct of class ' . $class . ' is not accessible or not defined as public');
+                    throw new ClassException('Method __construct of class ' . $class . ' is not accessible or not defined as public');
                 }
                 
                 $parameters = $this->collectParameters($reflectionMethod, $metaArgs);
@@ -161,7 +160,7 @@ class Pocket
             }
 
             if ($parameter->getType()->isBuiltin() === true) {
-                throw new ParameterNotFoundException('The parameter ' . $parameter->getName() . ' is not explicitly defined');
+                throw new ParameterNotFoundException('Parameter ' . $parameter->getName() . ' is not explicitly defined');
             }
 
             $parameterRealValues[$parameter->getPosition()] = $this->pouch->get((string) $parameter->getType()) ?? $this->loadObject((string) $parameter->getType()); // trust that the class is already in the cache
@@ -195,7 +194,7 @@ class Pocket
         
         while(count($ids)) {
             $id = array_shift($ids);
-            if (!isset($value[$id])) throw new ParameterNotFoundException('The parameter @' . $key . ' is not found in the configuration');
+            if (!isset($value[$id])) throw new ParameterNotFoundException('Parameter @' . $key . ' is not found in the configuration');
 
             $value = &$value[$id];
         }
