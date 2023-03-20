@@ -23,7 +23,7 @@ class ClassCollector implements \Iterator
         $parameters = [];
 
         if (!class_exists($class)) {
-            throw new ClassNotFoundException($class . " does not exist");
+            throw new ClassNotFoundException('Class ' . $class . ' does not exist');
         }
 
         if (in_array($class, $this->classes)) {
