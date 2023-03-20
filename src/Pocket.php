@@ -71,7 +71,7 @@ class Pocket
 
     private function &loadObject(string $class): ?object
     {
-        $mainClass = $class;
+        $targetClass = $class;
         $classCollector = new ClassCollector($class);
 
         foreach ($classCollector as $class) {
@@ -94,7 +94,9 @@ class Pocket
                 // try to get object in cache
                 $object = $this->pouch->get($class);
 
-                if (is_object($object) && get_class($object) === $class) {
+                if (is_object($object) && get_class($object) === $targetClass) {
+                    break; // class is loaded no need to go through all the classes
+                } else if (is_object($object) && get_class($object) === $class) {
                     // when found no need to do processing
                     continue;
                 }
@@ -106,7 +108,9 @@ class Pocket
         
             $object = &$this->pouch->get($class);
 
-            if (is_object($object) && get_class($object) === $class) {
+            if (is_object($object) && get_class($object) === $targetClass) {
+                break; // class is loaded no need to go through all the classes
+            } else if (is_object($object) && get_class($object) === $class) {
                 continue;
             }
 
@@ -128,7 +132,7 @@ class Pocket
             $this->pouch->add($object);
         }
 
-        return $this->pouch->get($mainClass);
+        return $this->pouch->get($targetClass);
     }
 
     private function collectParameters(ReflectionMethod $reflectionMethod, array $metaArgs = []): ?array
@@ -146,13 +150,9 @@ class Pocket
                 
                 if (strpos(needle: '@', haystack: $value) === 0) {
                     $value = $this->getParameter(substr($value, 1));
-
-                    if (is_string($value) && class_exists($value)) {
-                        $value = $this->loadObject($value);
-                    }
                 } else if (!$parameter->getType()->isBuiltin()) {
                     // the value could be a class try loading it
-                    $value = $this->pouch->get($value);
+                    $value = $this->pouch->get($value) ?? $this->loadObject($value);
                 }
 
                 $parameterRealValues[$parameter->getPosition()] = $value;
@@ -164,10 +164,9 @@ class Pocket
                 throw new ParameterNotFoundException('The parameter ' . $parameter->getName() . ' is not explicitly defined');
             }
 
-            $parameterRealValues[$parameter->getPosition()] = $this->pouch->get((string) $parameter->getType()); // trust that the class is already in the cache
+            $parameterRealValues[$parameter->getPosition()] = $this->pouch->get((string) $parameter->getType()) ?? $this->loadObject((string) $parameter->getType()); // trust that the class is already in the cache
         }
 
-        return $parameterRealValues;
         return $parameterRealValues;
     }
 
