@@ -152,6 +152,17 @@ class PocketTest extends TestCase
         }
     }
 
+    public function testShouldNotBeAbltToLoadClassWithNoServiceAttribute()
+    {
+        $this->expectException(ClassException::class);
+
+        $pocket = new Pocket();
+
+        $pocket
+            ->strictLoadingEnabled(true)
+            ->get(Vehicle::class);
+    }
+
     // public function testShouldHaveMetaData()
     // {
     //     $pocket = new Pocket;
