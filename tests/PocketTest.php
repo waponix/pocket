@@ -125,6 +125,10 @@ class PocketTest extends TestCase
         $pocket = new Pocket;
         $pocket->setParameters($this->parameters);
 
+        $person = $pocket->get(Bob::class);
+        $this->assertInstanceOf(Bob::class, $person);
+        $this->assertInstanceOf(Person::class, $person);
+
         for ($loop = 0; $loop < 1000; $loop++) {
             $vehicle = $pocket->get(BobsVehicle::class);
             $this->assertInstanceOf(Vehicle::class, $vehicle);
@@ -152,7 +156,7 @@ class PocketTest extends TestCase
         }
     }
 
-    public function testShouldNotBeAbltToLoadClassWithNoServiceAttribute()
+    public function testShouldNotBeAbleToLoadClassWithNoServiceAttribute()
     {
         $this->expectException(ClassException::class);
 
