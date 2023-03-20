@@ -26,7 +26,14 @@ class Pocket
     
     public function &get(string $class): ?object
     {
-        return $this->loadObject($class);
+        $object = $this->pouch->get($class);
+
+        if ($object !== null) {
+            $reflectionClass = new ReflectionClass($object);
+            $this->evaluateReflection($reflectionClass);
+        }
+
+        return $object ?? $this->loadObject($class);
     }
 
     public function invoke(string $class, string $method, ?array $args = []): mixed
@@ -76,13 +83,7 @@ class Pocket
         foreach ($classCollector as $class) {
             $reflectionClass = new ReflectionClass($class);
 
-            if ($this->strictLoading === true) {
-                $isService = count($reflectionClass->getAttributes(Service::class)) > 0;
-                
-                if ($isService === false) {
-                    throw new ClassException('Class ' . $class . ' is not a registered service');
-                }
-            }
+            $this->evaluateReflection($reflectionClass);
 
             $factory = null;
             $metaArgs = $this->getMetaArgs($reflectionClass, $factory); // get the meta args from the class level
@@ -93,9 +94,7 @@ class Pocket
                 // try to get object in cache
                 $object = $this->pouch->get($class);
 
-                if (is_object($object) && get_class($object) === $targetClass) {
-                    break; // class is loaded no need to go through all the classes
-                } else if (is_object($object) && get_class($object) === $class) {
+                if (is_object($object) && get_class($object) === $class) {
                     // when found no need to do processing
                     continue;
                 }
@@ -107,9 +106,7 @@ class Pocket
         
             $object = &$this->pouch->get($class);
 
-            if (is_object($object) && get_class($object) === $targetClass) {
-                break; // class is loaded no need to go through all the classes
-            } else if (is_object($object) && get_class($object) === $class) {
+            if (is_object($object) && get_class($object) === $class) {
                 continue;
             }
 
@@ -202,5 +199,16 @@ class Pocket
         $this->paramLinks[$key] = &$value;
 
         return $value;
+    }
+
+    private function evaluateReflection(\ReflectionClass $reflectionClass)
+    {
+        if ($this->strictLoading === true) {
+            $isService = count($reflectionClass->getAttributes(Service::class)) > 0;
+            
+            if ($isService === false) {
+                throw new ClassException('Class ' . $reflectionClass->getName() . ' is not a registered service');
+            }
+        }
     }
 }
