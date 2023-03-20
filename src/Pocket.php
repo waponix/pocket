@@ -148,7 +148,7 @@ class Pocket
                     $value = $this->getParameter(substr($value, 1));
 
                     if (is_string($value) && class_exists($value)) {
-                        $value = $this->pouch->get((string) $parameter->getType()) ?? $this->loadObject($value);
+                        $value = $this->loadObject($value);
                     }
                 } else if (!$parameter->getType()->isBuiltin()) {
                     // the value could be a class try loading it
