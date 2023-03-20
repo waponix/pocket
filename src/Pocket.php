@@ -16,6 +16,7 @@ class Pocket
     private readonly Pouch $pouch;
     private array $parameters = [];
     private array $paramLinks = [];
+    private bool $strictLoading = false;
 
     public function __construct(array $parameters = [])
     {
@@ -62,6 +63,12 @@ class Pocket
         return $this;
     }
 
+    public function strictLoadingEnabled(bool $flag): Pocket
+    {
+        $this->strictLoading = $flag;
+        return $this;
+    }
+
     private function &loadObject(string $class): ?object
     {
         $mainClass = $class;
@@ -69,6 +76,15 @@ class Pocket
 
         foreach ($classCollector as $class) {
             $reflectionClass = new ReflectionClass($class);
+
+            if ($this->strictLoading === true) {
+                $isService = count($reflectionClass->getAttributes(Service::class)) > 0;
+                
+                if ($isService === false) {
+                    throw new ClassException($class . ' is not a registered service');
+                }
+            }
+
             $factory = null;
             $metaArgs = $this->getMetaArgs($reflectionClass, $factory); // get the meta args from the class level
             $parameters = null;
