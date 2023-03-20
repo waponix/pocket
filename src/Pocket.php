@@ -15,6 +15,7 @@ class Pocket
 {
     private readonly Pouch $pouch;
     private array $parameters = [];
+    private array $paramLinks = [];
 
     public function __construct(array $parameters = [])
     {
@@ -129,11 +130,13 @@ class Pocket
                 
                 if (strpos(needle: '@', haystack: $value) === 0) {
                     $value = $this->getParameter(substr($value, 1));
-                }
 
-                if (!$parameter->getType()->isBuiltin()) {
+                    if (is_string($value) && class_exists($value)) {
+                        $value = $this->pouch->get((string) $parameter->getType()) ?? $this->loadObject($value);
+                    }
+                } else if (!$parameter->getType()->isBuiltin()) {
                     // the value could be a class try loading it
-                    $value = $this->loadObject($value);
+                    $value = $this->pouch->get($value);
                 }
 
                 $parameterRealValues[$parameter->getPosition()] = $value;
@@ -145,7 +148,7 @@ class Pocket
                 throw new ParameterNotFoundException('The parameter ' . $parameter->getName() . ' is not explicitly defined');
             }
 
-            $parameterRealValues[$parameter->getPosition()] = $this->loadObject((string) $parameter->getType());
+            $parameterRealValues[$parameter->getPosition()] = $this->pouch->get((string) $parameter->getType()); // trust that the class is already in the cache
         }
 
         return $parameterRealValues;
@@ -169,6 +172,8 @@ class Pocket
 
     private function getParameter(string $key): mixed
     {
+        if (isset($this->paramLinks[$key])) return $this->paramLinks[$key];
+
         $ids = explode('.', $key);
         
         $value = &$this->parameters;
@@ -179,6 +184,8 @@ class Pocket
 
             $value = &$value[$id];
         }
+
+        $this->paramLinks[$key] = &$value;
 
         return $value;
     }
