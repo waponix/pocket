@@ -156,9 +156,9 @@ class Pocket
                 continue;
             }
 
-            if ($parameter->getType()->isBuiltin() === true && !$parameter->isOptional()) {
+            if ($parameter->getType()->isBuiltin() === true && $parameter->isOptional() === false) {
                 throw new ParameterNotFoundException('Parameter ' . $parameter->getName() . ' is not explicitly defined');
-            } else {
+            } else if ($parameter->getType()->isBuiltin() === true && $parameter->isOptional() === true) {
                 // use the default value if no matching meta data found
                 $parameterRealValues[$parameter->getPosition()] = $parameter->getDefaultValue(); 
                 continue;
