@@ -158,6 +158,10 @@ class Pocket
 
             if ($parameter->getType()->isBuiltin() === true && !$parameter->isOptional()) {
                 throw new ParameterNotFoundException('Parameter ' . $parameter->getName() . ' is not explicitly defined');
+            } else {
+                // use the default value if no matching meta data found
+                $parameterRealValues[$parameter->getPosition()] = $parameter->getDefaultValue(); 
+                continue;
             }
 
             $parameterRealValues[$parameter->getPosition()] = $this->pouch->get((string) $parameter->getType()) ?? $this->loadObject((string) $parameter->getType()); // trust that the class is already in the cache
