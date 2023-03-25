@@ -7,4 +7,5 @@ interface ServiceAttributeInterface
 {
     public function getArgs(): array;
     public function getFactory(): ?Factory;
+    public function getTags(): null|string|array;
 } 
