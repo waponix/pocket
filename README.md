@@ -4,6 +4,11 @@ Is a kind of service container, it considers all loadable classes inside a proje
 
 Pocket is currently being developed in `PHP 8`, and will take advantage of it's new features as much as possible.
 
+## Installation
+```
+composer require waponix/pocket
+```
+
 ## Introduction
 Pocket considers all classes as service, you can pass any class name to pocket's get() method without doing any registration and it will try to load the object for you.
 > Note: you need to setup your own autoloading because pocket won't handle that for you, pocket also only works with PSR-4 autoloading
