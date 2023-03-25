@@ -1,20 +1,17 @@
 <?php
 namespace Waponix\Pocket\Iterator;
 
-/**
- * Iterator that will read the cache file from bottom to top
- */
-class PouchScanner implements \Iterator
+class FileReader implements \Iterator
 {
     private $stream;
     private int $key = 0;
 
-    public function __construct(string $cacheFile)
+    public function __construct(string $file)
     {
-        if (!file_exists($cacheFile)) {
-            throw new \Exception('File ' . $cacheFile . ' does not exist');
+        if (!file_exists($file)) {
+            throw new \Exception('File ' . $file . ' does not exist');
         }
-        $this->stream = fopen($cacheFile, 'r');
+        $this->stream = fopen($file, 'r');
     }
 
     public function current(): mixed
@@ -29,12 +26,12 @@ class PouchScanner implements \Iterator
 
     public function next(): void
     {
-        $this->key -= 1;
+        $this->key += 1;
     }
 
     public function valid(): bool
     {
-        $isValid = $this->stream !== false && fseek($this->stream, $this->key, SEEK_END) !== -1;
+        $isValid = $this->stream !== false && !feof($this->stream);
         if (!$isValid && $this->stream !== false) fclose($this->stream); // try to close the file
 
         return $isValid;
@@ -43,5 +40,10 @@ class PouchScanner implements \Iterator
     public function key(): int
     {
         return $this->key;
+    }
+
+    public function end(): void
+    {
+        fclose($this->stream);
     }
 }

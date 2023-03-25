@@ -9,31 +9,48 @@ use Waponix\Pocket\Attribute\Service;
 use Waponix\Pocket\Exception\ClassException;
 use Waponix\Pocket\Exception\ClassNotFoundException;
 use Waponix\Pocket\Exception\ParameterNotFoundException;
+use Waponix\Pocket\Exception\PocketConfigurationException;
 use Waponix\Pocket\Iterator\ClassCollector;
+use Waponix\Pocket\Iterator\FileReader;
 
 class Pocket
 {
     private readonly Pouch $pouch;
-    private array $parameters = [];
     private array $paramLinks = [];
+    private array $tags = [];
     private bool $strictLoading = false;
 
-    public function __construct(array $parameters = [])
+    public function __construct(
+        private string $root,
+        private array $parameters = []
+    )
     {
-        $this->pouch = new Pouch('./src/pocketcache');
-        $this->parameters = $parameters;
+        $this->pouch = new Pouch($this->root . '/pocketcache');
+        $this->loadTaggedServices();
     }
     
-    public function &get(string $class): ?object
+    public function &get(string $id): mixed
     {
-        $object = $this->pouch->get($class);
+        if (stripos($id, '#') === 0) {
+            $tags = $this->getTaggedServices(substr($id, 1));
+            return $tags;
+        }
+
+        $object = $this->pouch->get($id);
 
         if ($object !== null) {
             $reflectionClass = new ReflectionClass($object);
             $this->evaluateReflection($reflectionClass);
         }
 
-        return $object ?? $this->loadObject($class);
+        $object = $object ?? $this->loadObject($id);
+        return $object;
+    }
+
+    public function &getTaggedServices(string $id): ?array
+    {
+        $tags = isset($this->tags[$id]) ? $this->tags[$id] : null;
+        return $tags;
     }
 
     public function invoke(string $class, string $method, ?array $args = []): mixed
@@ -64,16 +81,111 @@ class Pocket
         };
     }
 
-    public function setParameters(array $parameters): Pocket
-    {
-        $this->parameters = $parameters;
-        return $this;
-    }
-
     public function strictLoadingEnabled(bool $flag): Pocket
     {
         $this->strictLoading = $flag;
         return $this;
+    }
+
+    private function loadTaggedServices(): void
+    {
+        if ($this->root === null) {
+            throw new PocketConfigurationException('No root is configured');
+        }
+
+        if (!file_exists($this->root)) {
+            throw new PocketConfigurationException('Root ' . $this->root . ' does not exist');
+        }
+
+        $finder = new \RecursiveDirectoryIterator($this->root);
+        $finder->setFlags(\RecursiveDirectoryIterator::SKIP_DOTS);
+        $iterator = new \RecursiveIteratorIterator($finder);
+        $files = new \RegexIterator($iterator, '/\.php$/');
+
+        foreach ($files as $file) {
+            $fileFullPath = str_replace('\\', '/', implode('/', [$file->getPath(), $file->getFilename()]));
+            $namespace = $this->getNamespaceFromFile($fileFullPath);
+            if ($namespace === null) continue;
+
+            $class = implode('\\', [$namespace, str_replace('.php', '', $file->getFilename())]);
+
+            $reflectionClass = new ReflectionClass($class);
+            $attributes = $reflectionClass->getAttributes(Service::class);
+
+            foreach ($attributes as $attribute) {
+                $tags = $attribute->newInstance()->getTags();
+
+                if ($tags === null) continue;
+
+                $object = &$this->loadObject($class);
+
+                if (is_string($tags)) {
+                    $this->addToTag($tags, $object);
+                } else if (is_array($tags)) {
+                    foreach ($tags as $tag) {
+                        $this->addToTag($tag, $object);
+                    }
+                }
+            }
+        }
+    }
+
+    private function addToTag(string $tagName, object &$object)
+    {
+        if (!isset($this->tags[$tagName])) {
+            $this->tags[$tagName] = [];
+        }
+
+        $this->tags[$tagName][] = &$object;
+    }
+
+    private function getNamespaceFromFile(string $file)
+    {
+        $reader = new FileReader($file);
+
+        $src = '';
+        $namespace = null;
+        foreach ($reader as $line) {
+            if (trim($line) === '') continue;
+
+            $src .= $line;
+
+            $namespace = $this->scanNamespace($src);
+            if ($namespace !== null) {
+                return $namespace;
+            }
+        }
+    }
+
+    private function scanNamespace(string $src): ?string
+    {
+        $tokens = token_get_all($src);
+    
+        $isPHP = false;
+        $isNamespace = false;
+        $namespace = null;
+        
+        foreach ($tokens as $token) {
+            if (!is_array($token) || count($token) < 3) continue;
+            
+            if (token_name($token[0]) === 'T_OPEN_TAG') {
+                $isPHP = true;
+            }
+
+            if (!$isPHP) {
+                return null;
+            }
+
+            if ($isNamespace === true && token_name($token[0]) === 'T_NAME_QUALIFIED') {
+                $namespace = $token[1];
+                break;
+            } else if (token_name($token[0]) === 'T_NAMESPACE') {
+                $isNamespace = true;
+                continue;
+            }
+        }
+    
+        return $namespace;
     }
 
     private function &loadObject(string $targetClass): ?object

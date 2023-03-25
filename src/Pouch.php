@@ -66,11 +66,14 @@ class Pouch
     {
         $id = md5($class);
 
+        $object = null;
+
         if ($this->loadAndValidate($id)) {
-            return $this->cache[$id][2];
+            $object = &$this->cache[$id][2];
+            return $object;
         }
 
-        return null;
+        return $object;
     }
 
     /**
@@ -87,7 +90,7 @@ class Pouch
         $data = $this->cache[$id] ?? false;
         // try to load data from cache
         if ($data === false) {
-            $data = &$this->loadCacheFromId($id);    
+            $data = $this->loadCacheFromId($id);    
         }
 
         if ($data === null) return false;
@@ -107,7 +110,7 @@ class Pouch
         return true;
     }
 
-    private function &loadCacheFromId(string $id): ?array
+    private function loadCacheFromId(string $id): ?array
     {
         $pouchScanner = new PouchScanner($this->cacheFile);
 
