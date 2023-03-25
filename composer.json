@@ -1,6 +1,6 @@
 {
     "name": "waponix/pocket",
-    "description": "Inspired by Symfony's \"service container\". The aim is to be able to get tools/services faster by instantiating the objects and automatically inject the dependencies, like a magician pulling an object out of his pocket.",
+    "description": "Is a service container that considers all loadable classes inside a project as a service.",
     "license": "GPL-3.0",
     "autoload": {
         "psr-4": {
