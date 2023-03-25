@@ -156,7 +156,7 @@ class Pocket
                 continue;
             }
 
-            if ($parameter->getType()->isBuiltin() === true) {
+            if ($parameter->getType()->isBuiltin() === true && !$parameter->isOptional()) {
                 throw new ParameterNotFoundException('Parameter ' . $parameter->getName() . ' is not explicitly defined');
             }
 
