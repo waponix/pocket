@@ -12,7 +12,8 @@ class Service implements ServiceAttributeInterface
 {
     public function __construct(
         private readonly array $args = [],
-        private readonly ?Factory $factory = null
+        private readonly ?Factory $factory = null,
+        private readonly null|string|array $tag = null,
     ) {
 
     }
@@ -25,5 +26,10 @@ class Service implements ServiceAttributeInterface
     public function getFactory(): ?Factory
     {
         return $this->factory;
+    }
+
+    public function getTags(): null|string|array
+    {
+        return $this->tag;
     }
 }
