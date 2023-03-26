@@ -15,6 +15,9 @@ use Waponix\Pocket\Iterator\FileReader;
 
 class Pocket
 {
+    const ID_TAG = '#';
+    const ID_PARAM = '@';
+
     private readonly Pouch $pouch;
     private array $paramLinks = [];
     private array $tags = [];
@@ -256,7 +259,11 @@ class Pocket
             if (isset($metaArgs[$parameter->getName()])) {
                 $value = $metaArgs[$parameter->getName()];
                 
-                if (strpos(needle: '@', haystack: $value) === 0) {
+                if (strpos(needle: self::ID_TAG, haystack: $value) === 0) {
+                    // the value is a tag id
+                    $value = $this->get($value);
+                } else if (strpos(needle: self::ID_PARAM, haystack: $value) === 0) {
+                    // the value is a parameter
                     $value = $this->getParameter(substr($value, 1));
                 } else if (!$parameter->getType()->isBuiltin()) {
                     // the value could be a class try loading it
