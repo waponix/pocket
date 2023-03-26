@@ -25,7 +25,7 @@ class Pocket
         private array $parameters = []
     )
     {
-        $this->pouch = new Pouch($this->root . '/pocketcache');
+        $this->pouch = new Pouch(__DIR__ . '/pocketcache');
         $this->loadTaggedServices();
     }
     
