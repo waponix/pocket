@@ -34,7 +34,7 @@ class Pocket
     
     public function &get(string $id): mixed
     {
-        if (stripos($id, '#') === 0) {
+        if (stripos($id, self::ID_TAG) === 0) {
             $tags = $this->getTaggedServices(substr($id, 1));
             return $tags;
         }
@@ -261,7 +261,7 @@ class Pocket
                 
                 if (strpos(needle: self::ID_TAG, haystack: $value) === 0) {
                     // the value is a tag id
-                    $value = $this->get($value);
+                    $value = $this->getTaggedServices(substr($value, 1));
                 } else if (strpos(needle: self::ID_PARAM, haystack: $value) === 0) {
                     // the value is a parameter
                     $value = $this->getParameter(substr($value, 1));
