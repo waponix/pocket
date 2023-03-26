@@ -259,10 +259,10 @@ class Pocket
             if (isset($metaArgs[$parameter->getName()])) {
                 $value = $metaArgs[$parameter->getName()];
                 
-                if (strpos(needle: self::ID_TAG, haystack: $value) === 0) {
+                if (is_string($value) && strpos(needle: self::ID_TAG, haystack: $value) === 0) {
                     // the value is a tag id
                     $value = $this->getTaggedServices(substr($value, 1));
-                } else if (strpos(needle: self::ID_PARAM, haystack: $value) === 0) {
+                } else if (is_string($value) && strpos(needle: self::ID_PARAM, haystack: $value) === 0) {
                     // the value is a parameter
                     $value = $this->getParameter(substr($value, 1));
                 } else if (!$parameter->getType()->isBuiltin()) {
