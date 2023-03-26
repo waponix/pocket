@@ -110,7 +110,7 @@ class Pocket
             $class = implode('\\', [$namespace, str_replace('.php', '', $file->getFilename())]);
 
             $reflectionClass = new ReflectionClass($class);
-            $attributes = $reflectionClass->getAttributes(Service::class);
+            $attributes = $reflectionClass->getAttributes(Service::class, 2);
 
             foreach ($attributes as $attribute) {
                 $tags = $attribute->newInstance()->getTags();
@@ -284,7 +284,7 @@ class Pocket
 
     private function getMetaArgs(\ReflectionClass | \ReflectionMethod $reflection, ?Factory &$factory = null): array
     {
-        $serviceMetas = $reflection->getAttributes(Service::class);
+        $serviceMetas = $reflection->getAttributes(Service::class, 2);
         $args = [];
 
         foreach ($serviceMetas as $serviceMeta) {
@@ -320,7 +320,7 @@ class Pocket
     private function evaluateReflection(\ReflectionClass $reflectionClass)
     {
         if ($this->strictLoading === true) {
-            $isService = count($reflectionClass->getAttributes(Service::class)) > 0;
+            $isService = count($reflectionClass->getAttributes(Service::class, 2)) > 0;
             
             if ($isService === false) {
                 throw new ClassException('Class ' . $reflectionClass->getName() . ' is not a registered service');
