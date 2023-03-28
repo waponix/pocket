@@ -1,7 +1,20 @@
 <?php
-include_once __DIR__  . '/Classess.php';
+include_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
+use Waponix\Pocket\Dummy\Bob;
+use Waponix\Pocket\Dummy\BobsVehicle;
+use Waponix\Pocket\Dummy\Jane;
+use Waponix\Pocket\Dummy\John;
+use Waponix\Pocket\Dummy\JohnVehicle;
+use Waponix\Pocket\Dummy\Manufacturer;
+use Waponix\Pocket\Dummy\Person;
+use Waponix\Pocket\Dummy\Suzuki;
+use Waponix\Pocket\Dummy\Vehicle;
+use Waponix\Pocket\Exception\ClassException;
+use Waponix\Pocket\Exception\ClassNotFoundException;
+use Waponix\Pocket\Exception\MethodNotFoundException;
+use Waponix\Pocket\Exception\PocketConfigurationException;
 use Waponix\Pocket\Pouch;
 
 class PouchTest extends TestCase
