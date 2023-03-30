@@ -171,7 +171,7 @@ class PocketTest extends TestCase
 
         $persons = $pocket->get('#person');
 
-        $this->assertNotNull($persons);
+        $this->assertInstanceOf(\Generator::class, $persons);
 
         foreach ($persons as $person) {
             $this->assertInstanceOf(Person::class, $person);
@@ -184,7 +184,7 @@ class PocketTest extends TestCase
 
         $vehicles = $pocket->get('#vehicle');
 
-        $this->assertNotNull($vehicles);
+        $this->assertInstanceOf(\Generator::class, $vehicles);
 
         foreach ($vehicles as $vehicle) {
             $this->assertInstanceOf(Vehicle::class, $vehicle);
@@ -197,20 +197,31 @@ class PocketTest extends TestCase
 
         $manufacturers = $pocket->get('#manufacturer');
 
-        $this->assertNotNull($manufacturers);
+        $this->assertInstanceOf(\Generator::class, $manufacturers);
 
         foreach ($manufacturers as $manufacturer) {
             $this->assertInstanceOf(Manufacturer::class, $manufacturer);
         }
     }
 
-    public function testNonExistingTagShouldBeNull()
+    public function testShouldBeAbleToGetParameterValue()
     {
         $pocket = $this->getPocket();
 
-        $manufacturers = $pocket->get('#none');
+        $johnsName = $pocket->get('@person.john.name');
 
-        $this->assertNull($manufacturers);
+        $this->assertIsString($johnsName);
+        $this->assertSame('John Doe', $johnsName);
+
+        $JanesName = $pocket->get('@person.jane.name');
+
+        $this->assertIsString($JanesName);
+        $this->assertSame('Jane Doe', $JanesName);
+
+        $bobsName = $pocket->get('@person.bob.name');
+
+        $this->assertIsString($bobsName);
+        $this->assertSame('Bob', $bobsName);
     }
 
     public function testShouldNotBeAbleToLoadClassWithNoServiceAttribute()
