@@ -34,9 +34,13 @@ class Pocket
     
     public function &get(string $id): mixed
     {
-        if (stripos($id, self::ID_TAG) === 0) {
-            $tags = $this->getTaggedServices(substr($id, 1));
+        if (stripos($id, self::ID_PARAM) === 0) {
+            $tags = $this->getParameter(substr($id, 1));
             return $tags;
+        }
+
+        if (stripos($id, self::ID_TAG) === 0) {
+            return $this->loadTag(substr($id, 1));
         }
 
         $object = $this->pouch->get($id);
@@ -50,10 +54,17 @@ class Pocket
         return $object;
     }
 
-    public function &getTaggedServices(string $id): ?array
+    /**
+     * Note: This function is a generator which is useful if you only need to run through all of the grouped tags,
+     * but if need to use repeatedly, it is better to store the values in an array and do the iteration from there
+     */
+    private function loadTag(string $id): ?\Generator
     {
-        $tags = isset($this->tags[$id]) ? $this->tags[$id] : null;
-        return $tags;
+        $tags = &$this->tags[$id] ?? [];
+
+        foreach ($tags as $key => $tag) {
+            yield $key => $tag;
+        }
     }
 
     public function invoke(string $class, string $method, ?array $args = []): mixed
@@ -250,7 +261,8 @@ class Pocket
     {
         $parameters = $reflectionMethod->getParameters();
         $parameterRealValues = null;
-        $metaArgs = array_merge($metaArgs, $this->getMetaArgs($reflectionMethod));
+        // use array dismantling to merge array values
+        $metaArgs = [...$metaArgs, ...$this->getMetaArgs($reflectionMethod)];
 
         foreach ($parameters as $parameter) {
             if (!$parameter instanceof ReflectionParameter) continue;
@@ -298,7 +310,7 @@ class Pocket
             $serviceMeta = $serviceMeta->newInstance();
             if (!$serviceMeta instanceof Service) continue;
             $factory = $serviceMeta->getFactory() ?? $factory;
-            $args = array_merge($args, $serviceMeta->getArgs());
+            $args = [...$args, ...$serviceMeta->getArgs()];
         }
 
         return $args;
