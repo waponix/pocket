@@ -4,11 +4,11 @@ namespace Waponix\Pocket\Iterator;
 use Waponix\Pocket\Exception\ClassNotFoundException;
 
 /**
- * Class ClassCollector
+ * Class ClassCollection
  * This iterator class will stack the dependencies first before the main class, to be later on read and loaded by the Pocket class
  * 
  */
-class ClassCollector implements \Iterator
+class ClassCollection implements \Iterator
 {
     private array $classes = [];
     private int $key = 0;

@@ -2,21 +2,21 @@
 
 use PHPUnit\Framework\TestCase;
 use Waponix\Pocket\Exception\ClassNotFoundException;
-use Waponix\Pocket\Iterator\ClassCollector;
+use Waponix\Pocket\Iterator\ClassCollection;
 
-class ClassCollectorTest extends TestCase
+class ClassCollectionTest extends TestCase
 {
     public function testShouldBeInstanceOfIterator()
     {
-        $classCollector = new ClassCollector(ClassCollector::class);
+        $classCollection = new ClassCollection(ClassCollection::class);
         
-        $this->assertInstanceOf(\Iterator::class, $classCollector);
+        $this->assertInstanceOf(\Iterator::class, $classCollection);
     }
 
     public function testShouldThrowClassNotFoundException()
     {
         $this->expectException(ClassNotFoundException::class);
         
-        $classCollector = new ClassCollector('NonExistingClass');
+        $classCollection = new ClassCollection('NonExistingClass');
     }
 }

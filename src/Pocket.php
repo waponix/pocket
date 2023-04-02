@@ -10,7 +10,7 @@ use Waponix\Pocket\Exception\ClassException;
 use Waponix\Pocket\Exception\ClassNotFoundException;
 use Waponix\Pocket\Exception\ParameterNotFoundException;
 use Waponix\Pocket\Exception\PocketConfigurationException;
-use Waponix\Pocket\Iterator\ClassCollector;
+use Waponix\Pocket\Iterator\ClassCollection;
 use Waponix\Pocket\Iterator\FileReader;
 
 class Pocket
@@ -204,9 +204,9 @@ class Pocket
 
     private function &loadObject(string $targetClass): ?object
     {
-        $classCollector = new ClassCollector($targetClass);
+        $classCollection = new ClassCollection($targetClass);
 
-        foreach ($classCollector as $class) {
+        foreach ($classCollection as $class) {
             $reflectionClass = new ReflectionClass($class);
 
             $this->evaluateReflection($reflectionClass);
