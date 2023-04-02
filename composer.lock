@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fb3d2dd81295d211a3793bd6f56b525d",
+    "content-hash": "7f0db31c0376d345ebe3ecf73c43678a",
     "packages": [],
     "packages-dev": [
         {
@@ -553,16 +553,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "10.0.15",
+            "version": "10.0.19",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "9b0c2245ef173a3d9546f6a4393a85d60eabe071"
+                "reference": "20c23e85c86e5c06d63538ba464e8054f4744e62"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/9b0c2245ef173a3d9546f6a4393a85d60eabe071",
-                "reference": "9b0c2245ef173a3d9546f6a4393a85d60eabe071",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/20c23e85c86e5c06d63538ba464e8054f4744e62",
+                "reference": "20c23e85c86e5c06d63538ba464e8054f4744e62",
                 "shasum": ""
             },
             "require": {
@@ -633,7 +633,8 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.0.15"
+                "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.0.19"
             },
             "funding": [
                 {
@@ -649,7 +650,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-03-09T06:43:13+00:00"
+            "time": "2023-03-27T11:46:33+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -953,16 +954,16 @@
         },
         {
             "name": "sebastian/diff",
-            "version": "5.0.0",
+            "version": "5.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/diff.git",
-                "reference": "70dd1b20bc198da394ad542e988381b44e64e39f"
+                "reference": "aae9a0a43bff37bd5d8d0311426c87bf36153f02"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/diff/zipball/70dd1b20bc198da394ad542e988381b44e64e39f",
-                "reference": "70dd1b20bc198da394ad542e988381b44e64e39f",
+                "url": "https://api.github.com/repos/sebastianbergmann/diff/zipball/aae9a0a43bff37bd5d8d0311426c87bf36153f02",
+                "reference": "aae9a0a43bff37bd5d8d0311426c87bf36153f02",
                 "shasum": ""
             },
             "require": {
@@ -1007,7 +1008,8 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/diff/issues",
-                "source": "https://github.com/sebastianbergmann/diff/tree/5.0.0"
+                "security": "https://github.com/sebastianbergmann/diff/security/policy",
+                "source": "https://github.com/sebastianbergmann/diff/tree/5.0.1"
             },
             "funding": [
                 {
@@ -1015,7 +1017,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-02-03T07:00:31+00:00"
+            "time": "2023-03-23T05:12:41+00:00"
         },
         {
             "name": "sebastian/environment",
@@ -1615,7 +1617,9 @@
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "php": ">=8.1.6"
+    },
     "platform-dev": [],
     "plugin-api-version": "2.3.0"
 }
