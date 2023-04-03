@@ -1,5 +1,5 @@
 
-# pocket
+# pocket (v2.2.0)
 Is a kind of service container, it considers all loadable classes inside a project as a service.
 
 Pocket is currently being developed in `PHP 8`, and will take advantage of it's new features as much as possible.
@@ -45,8 +45,9 @@ class Vehicle()
   }
 }
 
-$pocket = new Pocket(root: '/var/myProject');
+Pocket::setRoot('/src');
 
+$pocket = Pocket::getInstance();
 $person = $pocket->get(Vehicle::class);
 ```
 In the example above, the argument `$owner` will be injected with an instance of class Person. In any case that class Person also has any argument that is excpected to be class instance, those will automatically be injected as well.
@@ -94,15 +95,15 @@ First we need to set the parameters:
 ```php
 use Waponix\Pocket\Pocket;
 
-$pocket = new Pocket(
-	root: '/var/myProject',
-	parameters: [
+Pocket::setRoot('/src');
+Pocket::setParameters([
 		'post' => [
 			'method' => 'GET',
 			'url' => 'localhost'
 		]
-	]
-);
+	]);
+	
+$pocket = Pocket::getInstance();
 ```
 
 Then we can target these values in the Service Attribute:
