@@ -18,18 +18,47 @@ class Pocket
     const ID_TAG = '#';
     const ID_PARAM = '@';
 
+    private static ?string $root;
+    private static array $parameters;
+
     private readonly Pouch $pouch;
     private array $paramLinks = [];
     private array $tags = [];
     private bool $strictLoading = false;
 
-    public function __construct(
-        private string $root,
-        private array $parameters = []
-    )
+    private static ?Pocket $instance = null;
+
+    private function __construct()
+    {
+    }
+
+    public static function getInstance()
+    {
+        if (self::$instance instanceOf Pocket) {
+            return self::$instance;
+        }
+
+        self::$instance = new self;
+        self::$instance->init();
+
+        return self::$instance;
+    }
+
+    // basically replaces the __construct
+    private function init(): void
     {
         $this->pouch = new Pouch(__DIR__ . '/pocketcache');
         $this->loadTaggedServices();
+    }
+
+    public static function setRoot(string $root): void
+    {
+        self::$root = $root;
+    }
+
+    public static function setParameters(array $parameters): void
+    {
+        self::$parameters = $parameters;
     }
     
     public function &get(string $id): mixed
@@ -103,15 +132,15 @@ class Pocket
 
     private function loadTaggedServices(): void
     {
-        if ($this->root === null) {
+        if (self::$root === null) {
             throw new PocketConfigurationException('No root is configured');
         }
 
-        if (!file_exists($this->root)) {
-            throw new PocketConfigurationException('Root ' . $this->root . ' does not exist');
+        if (!file_exists(self::$root)) {
+            throw new PocketConfigurationException('Root ' . self::$root . ' does not exist');
         }
 
-        $finder = new \RecursiveDirectoryIterator($this->root);
+        $finder = new \RecursiveDirectoryIterator(self::$root);
         $finder->setFlags(\RecursiveDirectoryIterator::SKIP_DOTS);
         $iterator = new \RecursiveIteratorIterator($finder);
         $files = new \RegexIterator($iterator, '/\.php$/');
@@ -322,7 +351,7 @@ class Pocket
 
         $ids = explode('.', $key);
         
-        $value = &$this->parameters;
+        $value = self::$parameters;
         
         while(count($ids)) {
             $id = array_shift($ids);
