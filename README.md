@@ -22,7 +22,9 @@ class Person()
 {
 }
 
-$pocket = new Pocket(root: '/var/myProject'); // assuming that all of your source code is found in the /var/myProject directory
+Pocket::setRoot('./src'); // assuming that all of your classes are found in src folder within your project directory
+
+$pocket = Pocket::getInstance();
 
 $person = $pocket->get(Person::class); // will return an object instance of Person
 ```
@@ -45,7 +47,7 @@ class Vehicle()
   }
 }
 
-Pocket::setRoot('/src');
+Pocket::setRoot('./src');
 
 $pocket = Pocket::getInstance();
 $person = $pocket->get(Vehicle::class);
@@ -95,7 +97,7 @@ First we need to set the parameters:
 ```php
 use Waponix\Pocket\Pocket;
 
-Pocket::setRoot('/src');
+Pocket::setRoot('./src');
 Pocket::setParameters([
 		'post' => [
 			'method' => 'GET',
