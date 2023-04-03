@@ -22,7 +22,7 @@ class Person()
 {
 }
 
-Pocket::setRoot('./src'); // assuming that all of your classes are found in src folder within your project directory
+Pocket::setRoot('./src'); // assuming that all of your classes are found inside the src folder within your project directory
 
 $pocket = Pocket::getInstance();
 
