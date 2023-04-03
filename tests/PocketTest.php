@@ -17,43 +17,35 @@ use Waponix\Pocket\Exception\MethodNotFoundException;
 use Waponix\Pocket\Exception\PocketConfigurationException;
 use Waponix\Pocket\Pocket;
 
+Pocket::setRoot( __DIR__ . '/../src');
+Pocket::setParameters([
+    'person' => [
+        'john' => [
+            'name' => 'John Doe',
+            'age' => 22,
+            'gender' => 'male',
+            'email' => 'johndoe@mailme.com'
+        ],
+        'jane' => [
+            'name' => 'Jane Doe',
+            'age' => 20,
+            'gender' => 'female',
+            'email' => 'janedoe@mailme.com'
+        ],
+        'bob' => [
+            'name' => 'Bob',
+            'age' => 25,
+            'gender' => 'male',
+            'email' => 'bob@ong.com'
+        ]
+    ]
+]);
+
 class PocketTest extends TestCase
 {
-    private ?Pocket $pocket = null;
-
-    private array $parameters = [
-        'person' => [
-            'john' => [
-                'name' => 'John Doe',
-                'age' => 22,
-                'gender' => 'male',
-                'email' => 'johndoe@mailme.com'
-            ],
-            'jane' => [
-                'name' => 'Jane Doe',
-                'age' => 20,
-                'gender' => 'female',
-                'email' => 'janedoe@mailme.com'
-            ],
-            'bob' => [
-                'name' => 'Bob',
-                'age' => 25,
-                'gender' => 'male',
-                'email' => 'bob@ong.com'
-            ]
-        ]
-    ];
-
     private function getPocket(): Pocket
     {
-        if ($this->pocket instanceof Pocket) return $this->pocket;
-
-        $this->pocket = new Pocket(
-            root: __DIR__ . '/../src', 
-            parameters: $this->parameters
-        );
-
-        return $this->pocket;
+        return Pocket::getInstance();
     }
 
     public function testShouldThrowClassNotFoundException()
@@ -81,10 +73,10 @@ class PocketTest extends TestCase
 
         $this->assertInstanceOf(Person::class, $person);
         $this->assertInstanceOf(John::class, $person);
-        $this->assertSame($this->parameters['person']['john']['name'], $person->name);
-        $this->assertSame($this->parameters['person']['john']['age'], $person->age);
-        $this->assertSame($this->parameters['person']['john']['gender'], $person->gender);
-        $this->assertSame($this->parameters['person']['john']['email'], $person->email);
+        $this->assertSame($pocket->get('@person.john.name'), $person->name);
+        $this->assertSame($pocket->get('@person.john.age'), $person->age);
+        $this->assertSame($pocket->get('@person.john.gender'), $person->gender);
+        $this->assertSame($pocket->get('@person.john.email'), $person->email);
 
         $vehicle = $pocket->get(JohnVehicle::class);
         $this->assertInstanceOf(Vehicle::class, $vehicle);
@@ -101,10 +93,10 @@ class PocketTest extends TestCase
 
         $this->assertInstanceOf(Person::class, $person);
         $this->assertInstanceOf(Jane::class, $person);
-        $this->assertSame($this->parameters['person']['jane']['name'], $person->name);
-        $this->assertSame($this->parameters['person']['jane']['age'], $person->age);
-        $this->assertSame($this->parameters['person']['jane']['gender'], $person->gender);
-        $this->assertSame($this->parameters['person']['jane']['email'], $person->email);
+        $this->assertSame($pocket->get('@person.jane.name'), $person->name);
+        $this->assertSame($pocket->get('@person.jane.age'), $person->age);
+        $this->assertSame($pocket->get('@person.jane.gender'), $person->gender);
+        $this->assertSame($pocket->get('@person.jane.email'), $person->email);
     }
 
     public function testShouldBeAbleToGetJohnsName()
@@ -151,18 +143,18 @@ class PocketTest extends TestCase
         $ceo = $manufacturer->ceo;
         $this->assertInstanceOf(Person::class, $ceo);
         $this->assertInstanceOf(John::class, $ceo);
-        $this->assertSame($this->parameters['person']['john']['name'], $ceo->name);
-        $this->assertSame($this->parameters['person']['john']['age'], $ceo->age);
-        $this->assertSame($this->parameters['person']['john']['gender'], $ceo->gender);
-        $this->assertSame($this->parameters['person']['john']['email'], $ceo->email);
+        $this->assertSame($pocket->get('@person.john.name'), $ceo->name);
+        $this->assertSame($pocket->get('@person.john.age'), $ceo->age);
+        $this->assertSame($pocket->get('@person.john.gender'), $ceo->gender);
+        $this->assertSame($pocket->get('@person.john.email'), $ceo->email);
 
         $person = $vehicle->owner;
         $this->assertInstanceOf(Bob::class, $person);
         $this->assertInstanceOf(Person::class, $person);
-        $this->assertSame($this->parameters['person']['bob']['name'], $person->name);
-        $this->assertSame($this->parameters['person']['bob']['age'], $person->age);
-        $this->assertSame($this->parameters['person']['bob']['gender'], $person->gender);
-        $this->assertSame($this->parameters['person']['bob']['email'], $person->email);
+        $this->assertSame($pocket->get('@person.bob.name'), $person->name);
+        $this->assertSame($pocket->get('@person.bob.age'), $person->age);
+        $this->assertSame($pocket->get('@person.bob.gender'), $person->gender);
+        $this->assertSame($pocket->get('@person.bob.email'), $person->email);
     }
 
     public function testShouldBeAllPersonsInTag()
