@@ -163,7 +163,7 @@ class PocketTest extends TestCase
 
         $persons = $pocket->get('#person');
 
-        $this->assertInstanceOf(\Generator::class, $persons);
+        $this->assertIsArray($persons);
 
         foreach ($persons as $person) {
             $this->assertInstanceOf(Person::class, $person);
@@ -176,7 +176,7 @@ class PocketTest extends TestCase
 
         $vehicles = $pocket->get('#vehicle');
 
-        $this->assertInstanceOf(\Generator::class, $vehicles);
+        $this->assertIsArray($vehicles);
 
         foreach ($vehicles as $vehicle) {
             $this->assertInstanceOf(Vehicle::class, $vehicle);
@@ -189,7 +189,7 @@ class PocketTest extends TestCase
 
         $manufacturers = $pocket->get('#manufacturer');
 
-        $this->assertInstanceOf(\Generator::class, $manufacturers);
+        $this->assertIsArray($manufacturers);
 
         foreach ($manufacturers as $manufacturer) {
             $this->assertInstanceOf(Manufacturer::class, $manufacturer);

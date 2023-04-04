@@ -83,17 +83,9 @@ class Pocket
         return $object;
     }
 
-    /**
-     * Note: This function is a generator which is useful if you only need to run through all of the grouped tags,
-     * but if need to use repeatedly, it is better to store the values in an array and do the iteration from there
-     */
-    private function loadTag(string $id): ?\Generator
+    private function loadTag(string $id): array
     {
-        $tags = &$this->tags[$id] ?? [];
-
-        foreach ($tags as $key => $tag) {
-            yield $key => $tag;
-        }
+        return $this->tags[$id] ?? [];
     }
 
     public function invoke(string $class, string $method, ?array $args = []): mixed
