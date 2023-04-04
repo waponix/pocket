@@ -302,7 +302,7 @@ class Pocket
                 
                 if (is_string($value) && strpos(needle: self::ID_TAG, haystack: $value) === 0) {
                     // the value is a tag id
-                    $value = $this->getTaggedServices(substr($value, 1));
+                    $value = $this->loadTag(substr($value, 1));
                 } else if (is_string($value) && strpos(needle: self::ID_PARAM, haystack: $value) === 0) {
                     // the value is a parameter
                     $value = $this->getParameter(substr($value, 1));
