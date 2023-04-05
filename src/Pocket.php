@@ -267,6 +267,10 @@ class Pocket
                 $parameters = $this->collectParameters($reflectionMethod, $metaArgs);
             }
 
+            if ($reflectionClass->isInternal() === true) {
+                continue; // skip internal classes, this values should be defined explicitly
+            }
+
             $object = match (true) {
                 is_array($parameters) => $reflectionClass->newInstanceArgs($parameters),
                 $parameters === null => $reflectionClass->newInstance()
