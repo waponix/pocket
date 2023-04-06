@@ -1,6 +1,6 @@
 
 # pocket (v2.2.0)
-Is a kind of service container, it considers all loadable classes inside a project as a service.
+Is basically a service container.
 
 Pocket is currently being developed in `PHP 8`, and will take advantage of it's new features as much as possible.
 
