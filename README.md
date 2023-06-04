@@ -58,16 +58,16 @@ In the example above, the argument `$owner` will be injected with an instance of
 For other arguments, pocket cannot automatically inject its values and will throw an exception, but this problem can be solved by using Attribute.
 
 ## Using the Service Attribute
-Pocket will try to load any object as long as it's arguments are loadable or are explicitly defined. Arguments that expects instance of a class are considered explicit because they can be autoloaded, but for other arguments like string, integer, etc. we will need to find a way how to define them, we will need to use the **Service Attribute** [(`Waponix\Pocket\Attribute\Service`)](./src/Attribute/Service.php "(`Waponix\Pocket\Attribute\Service`)").
+Pocket will try to load any object as long as it's arguments are loadable or are explicitly defined. Arguments that expects instance of a class are considered explicit because they can be autoloaded, but for other arguments like string, integer, etc. we will need to find a way how to define them, we will need to use the **Service Attribute** [(`Waponix\Pocket\Attribute\ServiceAttribute`)](./src/Attribute/ServiceAttribute.php "(`Waponix\Pocket\Attribute\ServiceAttribute`)").
 
 > [Attribute class](http://https://www.php.net/manual/en/class.attribute.php "Attribute class") is a new feature in PHP 8 which is a native way of adding [Annotations](https://php-annotations.readthedocs.io/en/latest/UsingAnnotations.html "Annotations") in the code
 
 Example:
 ```php
 <?php
-use Waponix\Pocket\Attribute\Service;
+use Waponix\Pocket\Attribute\ServiceAttribute;
 
-#[Service(
+#[ServiceAttribute(
 	args: [
 		'method' => 'GET', // will map to $method
 		'url' => 'localhost' // will map to $url
@@ -153,11 +153,11 @@ If somehow your requirement needs to use factories for creating objects, then yo
 
 Example:
 ```php
-use Waponix\Pocket\Attribute\Service;
-use Waponix\Pocket\Attribute\Factory;
+use Waponix\Pocket\Attribute\ServiceAttribute;
+use Waponix\Pocket\Attribute\FactoryAttribute;
 
-#[Service(
-	factory: new Factory(
+#[ServiceAttribute(
+	factory: new FactoryAttribute(
 		class: PersonCreator::class,
 		method: 'createBob'
 	)
@@ -180,9 +180,9 @@ Another helpful tool is the ability to group services, these can be achieved  by
 
 Example:
 ```php
-use Waponix\Pocket\Attribute\Service;
+use Waponix\Pocket\Attribute\ServiceAttribute;
 
-#[Service(tag: 'person')]
+#[ServiceAttribute(tag: 'person')]
 class John extends Person
 {
 }
@@ -195,9 +195,9 @@ $persons = $pocket->get('#person');
 
 You can also define multiple tags for a service by just passing an array of string into the `tag` argument:
 ```php
-use Waponix\Pocket\Attribute\Service;
+use Waponix\Pocket\Attribute\ServiceAttribute;
 
-#[Service(tag: ['person', 'employee', 'owner'])]
+#[ServiceAttribute(tag: ['person', 'employee', 'owner'])]
 class John extends Person
 {
 }
