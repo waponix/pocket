@@ -1,7 +1,7 @@
 
   
 
-# pocket (v2.2.0)
+# pocket (v2.2.1)
 
 Is a kind of service container, it considers all loadable classes inside a project as a service.
 
