@@ -1,204 +1,443 @@
 
+  
+
 # pocket (v2.2.0)
+
 Is a kind of service container, it considers all loadable classes inside a project as a service.
+
+  
 
 Pocket is currently being developed in `PHP 8`, and will take advantage of it's new features as much as possible.
 
+  
+
 ## Installation
+
 ```
+
 composer require waponix/pocket
+
 ```
+
+  
 
 ## Introduction
+
 Pocket considers all classes as service, you can pass any class name to pocket's get() method without doing any registration and it will try to load the object for you.
+
 > Note: you need to setup your own autoloading because pocket won't handle that for you, pocket also only works with PSR-4 autoloading
 
+  
+
 Example:
+
 ```php
+
 <?php
+
 use Waponix\Pocket\Pocket;
 
-class Person()
+  
+
+class  Person()
+
 {
+
 }
+
+  
 
 Pocket::setRoot('./src'); // assuming that all of your classes are found inside the src folder within your project directory
 
+  
+
 $pocket = Pocket::getInstance();
 
+  
+
 $person = $pocket->get(Person::class); // will return an object instance of Person
+
 ```
+
+  
 
 Pocket will also automatically load any arguments that are expected to be an instance of a class in the constructor.
 
+  
+
 Example:
+
 ```php
+
 <?php
-class Person()
+
+class  Person()
+
 {
+
 }
 
-class Vehicle()
+  
+
+class  Vehicle()
+
 {
-  public function __construct(
-    public readonly Person $owner // this will be auto injected
-  )
-  {
-  }
+
+public  function  __construct(
+
+public  readonly  Person  $owner  // this will be auto injected
+
+)
+
+{
+
 }
+
+}
+
+  
 
 Pocket::setRoot('./src');
 
+  
+
 $pocket = Pocket::getInstance();
+
 $person = $pocket->get(Vehicle::class);
+
 ```
+
 In the example above, the argument `$owner` will be injected with an instance of class Person. In any case that class Person also has any argument that is excpected to be class instance, those will automatically be injected as well.
 
+  
+
 ### **But what about other argument types?**
+
 For other arguments, pocket cannot automatically inject its values and will throw an exception, but this problem can be solved by using Attribute.
 
-## Using the Service Attribute
-Pocket will try to load any object as long as it's arguments are loadable or are explicitly defined. Arguments that expects instance of a class are considered explicit because they can be autoloaded, but for other arguments like string, integer, etc. we will need to find a way how to define them, we will need to use the **Service Attribute** [(`Waponix\Pocket\Attribute\ServiceAttribute`)](./src/Attribute/ServiceAttribute.php "(`Waponix\Pocket\Attribute\ServiceAttribute`)").
+  
 
-> [Attribute class](http://https://www.php.net/manual/en/class.attribute.php "Attribute class") is a new feature in PHP 8 which is a native way of adding [Annotations](https://php-annotations.readthedocs.io/en/latest/UsingAnnotations.html "Annotations") in the code
+## Using the Service Attribute
+
+Pocket will try to load any object as long as it's arguments are loadable or are explicitly defined. Arguments that expects instance of a class are considered explicit because they can be autoloaded, but for other arguments like string, integer, etc. we will need to find a way how to define them, we will need to use the **Service Attribute** [(`Waponix\Pocket\Attribute\ServiceAttribute`)](./src/Attribute/ServiceAttribute.php  "(`Waponix\Pocket\Attribute\ServiceAttribute`)").
+
+  
+
+> [Attribute class](http://https://www.php.net/manual/en/class.attribute.php  "Attribute class") is a new feature in PHP 8 which is a native way of adding [Annotations](https://php-annotations.readthedocs.io/en/latest/UsingAnnotations.html  "Annotations") in the code
+
+  
 
 Example:
+
 ```php
+
 <?php
+
 use Waponix\Pocket\Attribute\ServiceAttribute;
 
+  
+
 #[ServiceAttribute(
-	args: [
-		'method' => 'GET', // will map to $method
-		'url' => 'localhost' // will map to $url
-	]
+
+args: [
+
+'method' => 'GET', // will map to $method
+
+'url' => 'localhost'  // will map to $url
+
+]
+
 )]
-class Post()
+
+class  Post()
+
 {
-	publc function __construct(
-		public readonly string $method,
-		public readonly string $url,
-	)
-	{
-	
-	}
+
+publc function  __construct(
+
+public  readonly  string  $method,
+
+public  readonly  string  $url,
+
+)
+
+{
+
 }
 
+}
+
+  
+
 $post = $pocket->get(Post::class);
+
 ```
+
 Take note that to make this work we should make the key inside `args:` match the variable name in the constructor arguments (*$name* and *$url*), this way we are telling pocket where to exactly get the values for them.
+
+  
 
 > It is also possible to override the value for an argument that expects a class instance, as long as it is a **child** of the expected class (e.g class John instance of class Person)
 
+  
+
 ## Parameters
+
 The previous example shows how to define the argument value the directly in the code, but it is also possible to have a dataset of parameters and pocket will take the value from there.
 
+  
+
 First we need to set the parameters:
+
 ```php
+
 use Waponix\Pocket\Pocket;
 
+  
+
 Pocket::setRoot('./src');
+
 Pocket::setParameters([
-		'post' => [
-			'method' => 'GET',
-			'url' => 'localhost'
-		]
-	]);
-	
+
+'post' => [
+
+'method' => 'GET',
+
+'url' => 'localhost'
+
+]
+
+]);
+
 $pocket = Pocket::getInstance();
+
 ```
 
+  
+
 Then we can target these values in the Service Attribute:
+
 ```php
+
 #[Service(
-    args: [
-        'method' => '@post.method',
-        'url' => '@post.url'
-    ]
+
+args: [
+
+'method' => '@post.method',
+
+'url' => '@post.url'
+
+]
+
 )]
-class Post()
+
+class  Post()
+
 {
-    publc function __construct(
-        public readonly string $method,
-        public readonly string $url,
-    )
-    {
-    }
+
+publc function  __construct(
+
+public  readonly  string  $method,
+
+public  readonly  string  $url,
+
+)
+
+{
+
 }
+
+}
+
 ```
+
 In the new example we are replacing the values with a parameter id indicated by `@`, this will then tell pocket to get the values from the parameter based on the id
+
 > Notice that the id `@post.method` is equivalent to $parameters['post']['method']
+
 ## Invoke Methods
+
 Pocket also allows to invoke class methods and automatically injects dependencies.
+
+  
 
 Let's say you have a controller class that has method that represents an action:
 
+  
+
 ```php
-class HomeController
+
+class  HomeController
+
 {
-	public function index(Request $request): Response
-	{
-		// do something with the $request and return a Response
-		return new Response();
-	}
+
+public  function  index(Request  $request): Response
+
+{
+
+// do something with the $request and return a Response
+
+return  new  Response();
+
 }
+
+}
+
 ```
 
 you can invoke this method by doing the example below:
+
 ```php
+
 $pocket->invoke(HomeController::class, 'index');
 ```
-## Factory
-If somehow your requirement needs to use factories for creating objects, then you can do this by defining a factory in the Service Attribute of the target class.
 
-Example:
-```php
-use Waponix\Pocket\Attribute\ServiceAttribute;
-use Waponix\Pocket\Attribute\FactoryAttribute;
+### Middlewares
+Pocket now supports defining middlewares in class methods and are executed when calling pocket's `invoke()` method, they can be defined using the **Middleware Attribute** class [(`Waponix\Pocket\Attribute\MiddlewareAttribute`)](./src/Attribute/MiddlewareAttribute.php  "(`Waponix\Pocket\Attribute\MiddlewareAttribute`)").
 
-#[ServiceAttribute(
-	factory: new FactoryAttribute(
-		class: PersonCreator::class,
-		method: 'createBob'
-	)
-)]
-class Bob extends PersonAbstract
-{}
-```
-and your factory class would look something like:
+First is to create the middleware class that extends [AbstractMiddleware](./src/Middleware/AbstractMiddleware.php  "(`Waponix\Pocket\Middleware\AbstractMiddleware`)"):
 ```php
-class PersonCreator
+<?php
+namespace App\Middleware;
+
+use Waponix\Pocket\Middleware\AbstractMiddleware;
+
+class Authenticator extends AbstractMiddleware
 {
-	public function createBob(): Person // concrete class
+	public function isGuest(Request $request)
 	{
-		return new Bob();
+		// do something with the $request here
+		$this->next(); // calling next() here will allow pocket to execute the next middleware in the stack, hence middleware execution will stop right after this method is executed
 	}
 }
 ```
-## Service Group
-Another helpful tool is the ability to group services, these can be achieved  by defining a tag value in the Service Attribute.
+The created middleware can now be used on the target class method:
+```php
+<?php
+namespace App\Controller;
+
+use Waponix\Pocket\Attribute\MiddlewareAttribute;
+use App\Middleware\Authenticator;
+
+class HomeController
+{
+
+	// The middleware attribute accepts an array
+	#[MiddlewareAttribute([
+		[Authenticator::class, 'isGuest']
+	])]
+	public function index(Request $request)
+	{
+		// now the isGuest() method will be executed first before reaching index()
+	}
+}
+```  
+>Note: middleware's arguments are limited to what arguments are defined and are expected by the final/main method which in the example above is the index() only expecting Request $request
+
+## Factory
+
+If somehow your requirement needs to use factories for creating objects, then you can do this by defining a factory in the Service Attribute of the target class.
+
+  
 
 Example:
+
 ```php
+
 use Waponix\Pocket\Attribute\ServiceAttribute;
+
+use Waponix\Pocket\Attribute\FactoryAttribute;
+
+  
+
+#[ServiceAttribute(
+
+factory: new  FactoryAttribute(
+
+class: PersonCreator::class,
+
+method: 'createBob'
+
+)
+
+)]
+
+class  Bob  extends  PersonAbstract
+
+{}
+
+```
+
+and your factory class would look something like:
+
+```php
+
+class  PersonCreator
+
+{
+
+public  function  createBob(): Person  // concrete class
+
+{
+
+return  new  Bob();
+
+}
+
+}
+
+```
+
+## Service Group
+
+Another helpful tool is the ability to group services, these can be achieved by defining a tag value in the Service Attribute.
+
+  
+
+Example:
+
+```php
+
+use Waponix\Pocket\Attribute\ServiceAttribute;
+
+  
 
 #[ServiceAttribute(tag: 'person')]
-class John extends Person
+
+class  John  extends  Person
+
 {
+
 }
+
 ```
+
 Now John is will be grouped under the tag person and can be loadable by accessing the tag name `#person`:
+
 ```php
+
 $persons = $pocket->get('#person');
+
 ```
+
 > Note: that the returned value will be an array or null if that tag is not used
 
+  
+
 You can also define multiple tags for a service by just passing an array of string into the `tag` argument:
+
 ```php
+
 use Waponix\Pocket\Attribute\ServiceAttribute;
 
+  
+
 #[ServiceAttribute(tag: ['person', 'employee', 'owner'])]
-class John extends Person
+
+class  John  extends  Person
+
 {
+
 }
+
 ```
