@@ -3,7 +3,7 @@
 
 # pocket (v2.2.0)
 
-Is a kind of service container, it considers all loadable classes inside a project as a service.
+Is basically a service container.
 
   
 
