@@ -4,8 +4,9 @@ namespace Waponix\Pocket;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionParameter;
-use Waponix\Pocket\Attribute\Factory;
-use Waponix\Pocket\Attribute\Service;
+use Waponix\Pocket\Attribute\FactoryAttribute;
+use Waponix\Pocket\Attribute\ServiceAttribute;
+use Waponix\Pocket\Attribute\MiddlewareAttribute;
 use Waponix\Pocket\Exception\ClassException;
 use Waponix\Pocket\Exception\ClassNotFoundException;
 use Waponix\Pocket\Exception\ParameterNotFoundException;
@@ -48,6 +49,7 @@ class Pocket
     private function init(): void
     {
         $this->pouch = new Pouch(__DIR__ . '/pocketcache');
+        $this->pouch->add($this);
         $this->loadTaggedServices();
     }
 
@@ -104,10 +106,77 @@ class Pocket
             throw new ClassException('Class ' . $class . ' has no public access to call method ' . $method . '()');
         }
 
+        
+        return $this->middleManage($class, $reflectionMethod, $args);
+    }
+
+    private function middleManage(string $class, ReflectionMethod $reflectionMethod, ?array $args = [])
+    {
         $args = $this->collectParameters($reflectionMethod, $args);
+
         $object = null;
         if (!$reflectionMethod->isStatic()) {
             $object = $this->get($class);
+        }
+
+        // Handle middlewares
+        $middlewareAttributes = $reflectionMethod->getAttributes(MiddlewareAttribute::class, 2);
+
+        foreach ($middlewareAttributes as $attribute) {
+            $attribute = $attribute->newInstance();
+            $middlewares = $attribute->getMiddlewares();
+
+            while (count($middlewares) > 0) {
+                $middlewareSet = array_shift($middlewares);
+                $middlewareClass = array_shift($middlewareSet);
+                $middlewareMethods = $middlewareSet;
+
+                foreach ($middlewareMethods as $middlewareMethod) {
+                    $middlewareReflection = new ReflectionMethod($middlewareClass, $middlewareMethod);
+
+                    $middlewareObject = null;
+                    if (!$middlewareReflection->isStatic()) {
+                        $middlewareObject = $this->get($middlewareClass);
+                    }
+
+                    if (!method_exists($middlewareClass, $middlewareMethod)) {
+                        throw new ClassException('Class ' . $middlewareClass . ' does not have or has no public access to call method ' . $middlewareMethod . '()');
+                    }
+
+                    $middlewareArgs = [];
+                    foreach ($middlewareReflection->getParameters() as $parameter) {
+                        $argValue = null;
+
+                        foreach($reflectionMethod->getParameters() as $mainParameter) {
+                            if ($parameter->getName() === $mainParameter->getName()) {
+                                $argValue = $args[$mainParameter->getPosition()];
+                                continue;
+                            }
+                        }
+
+                        if ($argValue === null) {
+                            throw new ParameterNotFoundException('Parameter $' . $parameter->getName() . ' is not accessible called in ' . $middlewareClass . '::' . $middlewareMethod . ', middlewares can only access parameters that are explicitly defined in the main function');
+                        }
+
+                        $middlewareArgs[$parameter->getPosition()] = $argValue;
+                    }
+
+                    $runNext = match (true) {
+                        !empty($middlewareArgs) => $middlewareReflection->invokeArgs($middlewareObject, $middlewareArgs),
+                        empty($middlewareArgs) => $middlewareReflection->invoke($middlewareObject)
+                    };
+
+                    if (is_integer($runNext)) {
+                        for ($skip = 1; $skip <= $runNext; $skip++) {
+                            if (count($middlewares) <= 0) break;
+                            array_shift($middlewares);
+                        }
+                    } else if ($runNext !== true) {
+                        // if the current middleware didn't return true, this wil no longer execute the remaining middlewares
+                        break(3);
+                    }
+                }
+            }
         }
 
         return match (true) {
@@ -145,7 +214,7 @@ class Pocket
             $class = implode('\\', [$namespace, str_replace('.php', '', $file->getFilename())]);
 
             $reflectionClass = new ReflectionClass($class);
-            $attributes = $reflectionClass->getAttributes(Service::class, 2);
+            $attributes = $reflectionClass->getAttributes(ServiceAttribute::class, 2);
 
             foreach ($attributes as $attribute) {
                 $tags = $attribute->newInstance()->getTags();
@@ -236,7 +305,7 @@ class Pocket
             $metaArgs = $this->getMetaArgs($reflectionClass, $factory); // get the meta args from the class level
             $parameters = null;
 
-            if ($factory instanceof Factory) {
+            if ($factory instanceof FactoryAttribute) {
                 $class = $factory->getClass(); // alias the class with the factory class
                 // try to get object in cache
                 $object = $this->pouch->get($class);
@@ -265,6 +334,10 @@ class Pocket
                 }
                 
                 $parameters = $this->collectParameters($reflectionMethod, $metaArgs);
+            }
+
+            if ($reflectionClass->isInternal() === true) {
+                continue; // skip internal classes, this values should be defined explicitly
             }
 
             $object = match (true) {
@@ -322,14 +395,14 @@ class Pocket
         return $parameterRealValues;
     }
 
-    private function getMetaArgs(\ReflectionClass | \ReflectionMethod $reflection, ?Factory &$factory = null): array
+    private function getMetaArgs(\ReflectionClass | \ReflectionMethod $reflection, ?FactoryAttribute &$factory = null): array
     {
-        $serviceMetas = $reflection->getAttributes(Service::class, 2);
+        $serviceMetas = $reflection->getAttributes(ServiceAttribute::class, 2);
         $args = [];
 
         foreach ($serviceMetas as $serviceMeta) {
             $serviceMeta = $serviceMeta->newInstance();
-            if (!$serviceMeta instanceof Service) continue;
+            if (!$serviceMeta instanceof ServiceAttribute) continue;
             $factory = $serviceMeta->getFactory() ?? $factory;
             $args = [...$args, ...$serviceMeta->getArgs()];
         }
@@ -360,7 +433,7 @@ class Pocket
     private function evaluateReflection(\ReflectionClass $reflectionClass)
     {
         if ($this->strictLoading === true) {
-            $isService = count($reflectionClass->getAttributes(Service::class, 2)) > 0;
+            $isService = count($reflectionClass->getAttributes(ServiceAttribute::class, 2)) > 0;
             
             if ($isService === false) {
                 throw new ClassException('Class ' . $reflectionClass->getName() . ' is not a registered service');

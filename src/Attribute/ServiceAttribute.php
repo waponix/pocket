@@ -8,11 +8,11 @@ use Waponix\Pocket\Attribute\Interface\ServiceAttributeInterface;
  * use @ sign if the value needed is coming from Pocket->parameters (e.g @person.john.name = $parameters['person']['john']['name'])
  */
 #[\Attribute]
-class Service implements ServiceAttributeInterface
+class ServiceAttribute implements ServiceAttributeInterface
 {
     public function __construct(
         private readonly array $args = [],
-        private readonly ?Factory $factory = null,
+        private readonly ?FactoryAttribute $factory = null,
         private readonly null|string|array $tag = null,
     ) {
 
@@ -23,7 +23,7 @@ class Service implements ServiceAttributeInterface
         return $this->args;
     }
 
-    public function getFactory(): ?Factory
+    public function getFactory(): ?FactoryAttribute
     {
         return $this->factory;
     }

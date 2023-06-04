@@ -3,7 +3,7 @@ namespace Waponix\Pocket\Attribute;
 
 use Waponix\Pocket\Attribute\Interface\FactoryAttributeInterface;
 
-class Factory implements FactoryAttributeInterface
+class FactoryAttribute implements FactoryAttributeInterface
 {
     public function __construct(
         private readonly string $class,
