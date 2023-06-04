@@ -4,8 +4,8 @@ namespace Waponix\Pocket;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionParameter;
-use Waponix\Pocket\Attribute\Factory;
-use Waponix\Pocket\Attribute\Service;
+use Waponix\Pocket\Attribute\FactoryAttribute;
+use Waponix\Pocket\Attribute\ServiceAttribute;
 use Waponix\Pocket\Attribute\MiddlewareAttribute;
 use Waponix\Pocket\Exception\ClassException;
 use Waponix\Pocket\Exception\ClassNotFoundException;
@@ -214,7 +214,7 @@ class Pocket
             $class = implode('\\', [$namespace, str_replace('.php', '', $file->getFilename())]);
 
             $reflectionClass = new ReflectionClass($class);
-            $attributes = $reflectionClass->getAttributes(Service::class, 2);
+            $attributes = $reflectionClass->getAttributes(ServiceAttribute::class, 2);
 
             foreach ($attributes as $attribute) {
                 $tags = $attribute->newInstance()->getTags();
@@ -305,7 +305,7 @@ class Pocket
             $metaArgs = $this->getMetaArgs($reflectionClass, $factory); // get the meta args from the class level
             $parameters = null;
 
-            if ($factory instanceof Factory) {
+            if ($factory instanceof FactoryAttribute) {
                 $class = $factory->getClass(); // alias the class with the factory class
                 // try to get object in cache
                 $object = $this->pouch->get($class);
@@ -395,14 +395,14 @@ class Pocket
         return $parameterRealValues;
     }
 
-    private function getMetaArgs(\ReflectionClass | \ReflectionMethod $reflection, ?Factory &$factory = null): array
+    private function getMetaArgs(\ReflectionClass | \ReflectionMethod $reflection, ?FactoryAttribute &$factory = null): array
     {
-        $serviceMetas = $reflection->getAttributes(Service::class, 2);
+        $serviceMetas = $reflection->getAttributes(ServiceAttribute::class, 2);
         $args = [];
 
         foreach ($serviceMetas as $serviceMeta) {
             $serviceMeta = $serviceMeta->newInstance();
-            if (!$serviceMeta instanceof Service) continue;
+            if (!$serviceMeta instanceof ServiceAttribute) continue;
             $factory = $serviceMeta->getFactory() ?? $factory;
             $args = [...$args, ...$serviceMeta->getArgs()];
         }
@@ -433,7 +433,7 @@ class Pocket
     private function evaluateReflection(\ReflectionClass $reflectionClass)
     {
         if ($this->strictLoading === true) {
-            $isService = count($reflectionClass->getAttributes(Service::class, 2)) > 0;
+            $isService = count($reflectionClass->getAttributes(ServiceAttribute::class, 2)) > 0;
             
             if ($isService === false) {
                 throw new ClassException('Class ' . $reflectionClass->getName() . ' is not a registered service');
